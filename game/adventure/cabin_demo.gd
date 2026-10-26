@@ -124,6 +124,7 @@ func _page_changed(id: StringName) -> void:
 		if region.action == null and str(region.destination).begins_with("@"):
 			region.destination = _resolve(region.destination)
 	page_label.text = str(page_data[id]["title"])
+	_apply_shader()
 	_last_hint = ""
 	hint.text = ""
 
