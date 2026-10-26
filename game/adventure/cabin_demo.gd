@@ -101,8 +101,8 @@ func _ready() -> void:
 	session.page_changed.connect(_on_page_changed)
 	session.message_requested.connect(_on_message)
 	screen.background_activated.connect(_on_background)
-	_cursor_normal = load("res://assets/cursors/Circle.png") as Texture2D
-	_cursor_hover = load("res://assets/cursors/MidRing.png") as Texture2D
+	_cursor_normal = _load_cursor("res://assets/cursors/Circle.png")
+	_cursor_hover = _load_cursor("res://assets/cursors/MidRing.png")
 	_apply_game_cursor(false)
 	screen.hotspot_activated.connect(_on_interaction)
 	_make_hud()
@@ -201,6 +201,23 @@ func _navigate_edge(point: Vector2) -> void:
 		navigate(StringName(entry.get("edge_left", _fallback_back())))
 	elif point.x >= 0.89:
 		navigate(StringName(entry.get("edge_right", _fallback_back())))
+
+
+func _load_cursor(path: String) -> Texture2D:
+	var original := load(path) as Texture2D
+	if original == null:
+		return null
+	var bitmap := original.get_image()
+	if bitmap == null or bitmap.is_empty():
+		return original
+	# Maximum 32 physical pixels. Nearest resize avoids texture filtering blur.
+	var length := maxi(bitmap.get_width(), bitmap.get_height())
+	if length > 32:
+		var ratio := 32.0 / float(length)
+		bitmap.resize(maxi(1, roundi(bitmap.get_width() * ratio)),
+			maxi(1, roundi(bitmap.get_height() * ratio)),
+			Image.INTERPOLATE_NEAREST)
+	return ImageTexture.create_from_image(bitmap)
 
 
 func _apply_game_cursor(hovering: bool, force: bool = false) -> void:
