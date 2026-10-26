@@ -9,8 +9,11 @@ ROOT = Path(__file__).resolve().parents[2]
 DIR = ROOT / "assets" / "cabin"
 FILES = (
     "cabin_base.png", "cabin_base_open_door.png", "cabin_back.png",
-    "cabin_bed.png", "computer.png", "bed_window.png",
+    "cabin_bed.png", "computer.png", "computer_side_window.png",
     "cabin_closed_door.png", "cabin_open_door.png",
+    "bed_close.png", "bed_windows.png", "entry_picture.png",
+    "desktop_tower.png", "computer_screen.png", "cabin_shelf.png",
+    "cabin_clothes.png", "cabin_boots.png",
 )
 DOORS = {"cabin_closed_door.png", "cabin_open_door.png"}
 EXPECTED = (1448, 1086)
