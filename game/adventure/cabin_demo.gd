@@ -24,7 +24,6 @@ var _paused := false
 var _show_guides := false
 var _shader_name := "YUV sutil"
 var _intensity := 0.55
-var _shader_name := "YUV sutil"
 var _audio_events: Dictionary = {}
 var _last_page: StringName
 var _arrows: Control
