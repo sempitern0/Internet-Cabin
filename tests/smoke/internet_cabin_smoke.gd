@@ -44,7 +44,7 @@ func _run_smoke() -> void:
 		push_error("Overview unavailable")
 		get_tree().quit(1)
 		return
-	if instance.screen.hotspot_at(Vector2(0.68, 0.92)) != null:
+	if instance.screen.hotspot_at(Vector2(0.73, 0.78)) != null:
 		push_error("Empty floor should not activate a nonexistent bed")
 		get_tree().quit(1)
 		return
