@@ -10,7 +10,7 @@ config_version=5
 
 [application]
 
-config/name="Nucleus"
+config/name="Internet-Cabin"
 config/auto_accept_quit=false
 config/quit_on_go_back=false
 config/features=PackedStringArray("4.7", "Forward Plus")
@@ -18,7 +18,7 @@ config/icon="res://icon.svg"
 
 [audio]
 
-buses/default_bus_layout="res://default_bus_layout.tres"
+buses/default_bus_layout="uid://cktnsh7pma6tc"
 
 [autoload]
 
@@ -31,6 +31,8 @@ NucleusSceneFlow="*res://core/scene_flow/scene_flow_service.gd"
 
 [display]
 
+window/size/viewport_width=1280
+window/size/viewport_height=720
 window/stretch/mode="canvas_items"
 window/stretch/aspect="expand"
 
