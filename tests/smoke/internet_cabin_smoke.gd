@@ -35,7 +35,7 @@ func _run_smoke() -> void:
 		push_error("Desk page unavailable")
 		get_tree().quit(1)
 		return
-	var pc_region := instance.screen.hotspot_at(Vector2(0.36, 0.45))
+	var pc_region = instance.screen.hotspot_at(Vector2(0.36, 0.45))
 	if pc_region == null or pc_region.id != &"screen":
 		push_error("CRT interactive polygon does not cover the CRT")
 		get_tree().quit(1)

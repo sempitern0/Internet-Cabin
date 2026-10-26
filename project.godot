@@ -19,7 +19,7 @@ config/icon="res://icon.svg"
 
 [audio]
 
-buses/default_bus_layout="res://default_bus_layout.tres"
+buses/default_bus_layout="uid://cktnsh7pma6tc"
 
 [autoload]
 
@@ -48,7 +48,8 @@ folder_colors={
 "res://components/": "yellow",
 "res://components/ui/": "green",
 "res://core/": "purple",
-"res://modules/": "purple"
+"res://modules/": "purple",
+"res://shaders/": "purple"
 }
 
 [gui]
