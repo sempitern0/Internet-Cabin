@@ -1,0 +1,98 @@
+[gd_scene load_steps=6 format=3]
+
+[ext_resource type="Script" path="res://game/adventure/cabin_demo.gd" id="1"]
+[ext_resource type="Script" path="res://components/ui/interaction/nucleus_image_screen.gd" id="2"]
+[ext_resource type="Script" path="res://components/ui/effects/nucleus_screen_shader_stack.gd" id="3"]
+[ext_resource type="Script" path="res://game/adventure/breathing_camera.gd" id="4"]
+[ext_resource type="Theme" path="res://game/ui/internet_cabin_theme.tres" id="5"]
+
+[node name="InternetCabinDemo" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme = ExtResource("5")
+script = ExtResource("1")
+
+[node name="Layout" type="VBoxContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 4
+
+[node name="Toolbar" type="HBoxContainer" parent="Layout"]
+layout_mode = 2
+custom_minimum_size = Vector2(0, 54)
+theme_override_constants/separation = 8
+
+[node name="Title" type="Label" parent="Layout/Toolbar"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "INTERNET CABIN · ATARDECER"
+
+[node name="Filters" type="Button" parent="Layout/Toolbar"]
+layout_mode = 2
+text = "VHS"
+
+[node name="Motion" type="CheckButton" parent="Layout/Toolbar"]
+layout_mode = 2
+button_pressed = true
+text = "Respiración"
+
+[node name="Stage" type="CenterContainer" parent="Layout"]
+layout_mode = 2
+size_flags_vertical = 3
+mouse_filter = 1
+
+[node name="Artwork" type="AspectRatioContainer" parent="Layout/Stage"]
+layout_mode = 2
+custom_minimum_size = Vector2(320, 240)
+size_flags_horizontal = 3
+size_flags_vertical = 3
+ratio = 1.333333
+stretch_mode = 3
+mouse_filter = 1
+
+[node name="Screen" type="Control" parent="Layout/Stage/Artwork"]
+layout_mode = 2
+mouse_filter = 0
+script = ExtResource("2")
+preserve_aspect = true
+
+[node name="ShaderStack" type="Node" parent="Layout/Stage/Artwork/Screen" node_paths=PackedStringArray("backbuffer_target")]
+script = ExtResource("3")
+backend = 1
+backbuffer_target = NodePath("..")
+
+[node name="Actions" type="HFlowContainer" parent="Layout"]
+layout_mode = 2
+custom_minimum_size = Vector2(0, 60)
+theme_override_constants/h_separation = 6
+theme_override_constants/v_separation = 4
+
+[node name="Footer" type="HBoxContainer" parent="Layout"]
+layout_mode = 2
+custom_minimum_size = Vector2(0, 44)
+theme_override_constants/separation = 8
+
+[node name="Previous" type="Button" parent="Layout/Footer"]
+layout_mode = 2
+text = "◀"
+
+[node name="Help" type="Label" parent="Layout/Footer"]
+layout_mode = 2
+size_flags_horizontal = 3
+horizontal_alignment = 1
+text = "Haz clic en un objeto o usa Tab / Intro."
+
+[node name="Next" type="Button" parent="Layout/Footer"]
+layout_mode = 2
+text = "▶"
+
+[node name="Breathing" type="Node" parent="."]
+script = ExtResource("4")
