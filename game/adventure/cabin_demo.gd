@@ -22,7 +22,7 @@ var history: Array[StringName] = []
 var _suppress_history := false
 var _paused := false
 var _show_guides := false
-var _shader_name := "YUV sutil"
+var _shader_name := "Fathom"
 var _intensity := 0.55
 var _audio_events: Dictionary = {}
 var _last_page: StringName
@@ -31,6 +31,9 @@ var _pause_panel: PanelContainer
 var _hint: Label
 var _shader_select: OptionButton
 var _shader_strength: HSlider
+var _cursor_normal: Texture2D
+var _cursor_hover: Texture2D
+var _cursor_active := false
 
 
 func _ready() -> void:
@@ -98,6 +101,9 @@ func _ready() -> void:
 	session.page_changed.connect(_on_page_changed)
 	session.message_requested.connect(_on_message)
 	screen.background_activated.connect(_on_background)
+	_cursor_normal = load("res://assets/cursors/Circle.png") as Texture2D
+	_cursor_hover = load("res://assets/cursors/MidRing.png") as Texture2D
+	_apply_game_cursor(false)
 	screen.hotspot_activated.connect(_on_interaction)
 	_make_hud()
 	breathing.target = screen
@@ -121,10 +127,9 @@ func _process(_delta: float) -> void:
 	var point := screen.normalized_point(screen.get_local_mouse_position())
 	var hit := screen.hotspot_at(point)
 	var x := point.x
-	var cursor := Control.CURSOR_ARROW
-	if hit != null or (point.y >= 0 and (x < 0.09 or x > 0.91 or point.y > 0.89)):
-		cursor = Control.CURSOR_POINTING_HAND
-	screen.mouse_default_cursor_shape = cursor
+	var active := hit != null or (point.y >= 0 and point.y <= 1.0
+		and (x <= 0.11 or x >= 0.89 or point.y >= 0.86))
+	_apply_game_cursor(active)
 	_hint.text = str(hit.description_key) if hit != null and _show_guides else ""
 
 
@@ -135,7 +140,7 @@ func _resolve(target: StringName) -> StringName:
 		&"@interior_door":
 			return &"door_open" if session.has_flag(&"door_open") else &"door_closed"
 		&"@previous":
-			return history.back() if not history.is_empty() else &"overview_closed"
+			return history.back() if not history.is_empty() else _fallback_back()
 	return target
 
 
@@ -148,7 +153,10 @@ func navigate(target: StringName) -> Error:
 		var result := session.change_page(prior)
 		_suppress_history = false
 		return result
-	return session.change_page(_resolve(target))
+	var destination := _resolve(target)
+	if destination == session.current_page:
+		return OK
+	return session.change_page(destination)
 
 
 func _on_page_changed(id: StringName) -> void:
@@ -172,14 +180,41 @@ func _on_page_changed(id: StringName) -> void:
 func _on_background(pos: Vector2) -> void:
 	if _paused or not page_data.has(session.current_page):
 		return
-	var entry: Dictionary = page_data[session.current_page]
-	if pos.y >= 0.89:
-		navigate(&"@previous")
-	elif pos.x <= 0.09:
-		navigate(StringName(entry.get("edge_left", "@previous")))
-	elif pos.x >= 0.91:
-		navigate(StringName(entry.get("edge_right", "@previous")))
+	_navigate_edge(pos)
 
+
+
+func _fallback_back() -> StringName:
+	if session == null or not page_data.has(session.current_page):
+		return &"overview_closed"
+	return _resolve(StringName(page_data[session.current_page].get(
+		"back_target", "overview_closed")))
+
+
+func _navigate_edge(point: Vector2) -> void:
+	if point.x < 0.0 or point.x > 1.0 or point.y < 0.0 or point.y > 1.0:
+		return
+	var entry: Dictionary = page_data[session.current_page]
+	if point.y >= 0.86:
+		navigate(_fallback_back())
+	elif point.x <= 0.11:
+		navigate(StringName(entry.get("edge_left", _fallback_back())))
+	elif point.x >= 0.89:
+		navigate(StringName(entry.get("edge_right", _fallback_back())))
+
+
+func _apply_game_cursor(hovering: bool, force: bool = false) -> void:
+	if _paused or (not force and hovering == _cursor_active):
+		return
+	_cursor_active = hovering
+	var image := _cursor_hover if hovering else _cursor_normal
+	if image == null:
+		return
+	# OS cursor textures are not subject to CanvasLayer, camera or VHS scaling.
+	# Keep imported PNG pixels unfiltered; the hotspot is their geometric centre.
+	var hotspot := image.get_size() * 0.5
+	Input.set_custom_mouse_cursor(image, Input.CURSOR_ARROW, hotspot)
+	Input.set_custom_mouse_cursor(image, Input.CURSOR_POINTING_HAND, hotspot)
 
 func _on_interaction(id: StringName, _destination: StringName) -> void:
 	_play_event("interaction:" + str(id))
@@ -206,13 +241,17 @@ func _make_hud() -> void:
 		)
 		button.ignore_texture_size = true
 		button.stretch_mode = TextureButton.STRETCH_KEEP_ASPECT_CENTERED
-		button.custom_minimum_size = Vector2(65, 75)
+		button.custom_minimum_size = Vector2(38, 40)
+		button.size = Vector2(38, 40)
 		button.mouse_filter = Control.MOUSE_FILTER_STOP
 		_arrows.add_child(button)
 		button.pressed.connect(_navigate_side.bind(side))
-		button.set_anchors_and_offsets_preset(Control.PRESET_CENTER_LEFT if side == "left"
-			else Control.PRESET_CENTER_RIGHT if side == "right" else Control.PRESET_CENTER_BOTTOM)
-		button.position += (Vector2(12, 0) if side == "left" else Vector2(-77, 0))
+		button.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_LEFT if side == "left"
+			else Control.PRESET_BOTTOM_RIGHT if side == "right" else Control.PRESET_CENTER_BOTTOM)
+		button.offset_left = 16 if side == "left" else -54 if side == "right" else -19
+		button.offset_right = 54 if side == "left" else -16 if side == "right" else 19
+		button.offset_top = -52
+		button.offset_bottom = -12
 	_arrows.hide()
 	_hint = Label.new()
 	_hint.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -233,7 +272,7 @@ func _make_hud() -> void:
 	_shader_select = OptionButton.new()
 	for name in SHADERS:
 		_shader_select.add_item(name)
-	_shader_select.select(1)
+	_shader_select.select(SHADERS.keys().find(_shader_name))
 	column.add_child(_shader_select)
 	_shader_select.item_selected.connect(_on_shader_selected)
 	_shader_strength = HSlider.new()
@@ -260,9 +299,9 @@ func _navigate_side(side: String) -> void:
 		return
 	var entry: Dictionary = page_data[session.current_page]
 	if side == "back":
-		navigate(&"@previous")
+		navigate(_fallback_back())
 	else:
-		navigate(StringName(entry.get("edge_" + side, "@previous")))
+		navigate(StringName(entry.get("edge_" + side, _fallback_back())))
 
 
 func _update_arrows() -> void:
@@ -277,6 +316,11 @@ func set_paused(value: bool) -> void:
 	screen.interaction_enabled = not value
 	_update_arrows()
 	get_tree().paused = value
+	if value:
+		Input.set_custom_mouse_cursor(null)
+		_cursor_active = false
+	else:
+		_apply_game_cursor(false, true)
 
 
 func _on_shader_selected(index: int) -> void:
