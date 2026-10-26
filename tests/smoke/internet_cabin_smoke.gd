@@ -1,10 +1,20 @@
 extends Node
 
 func _ready() -> void:
+	get_tree().create_timer(10.0).timeout.connect(_timed_out)
 	call_deferred("_run_smoke")
 
+func _timed_out() -> void:
+	push_error("Internet Cabin smoke timed out")
+	get_tree().quit(1)
+
 func _run_smoke() -> void:
-	var instance := load("res://game/adventure/cabin_demo.tscn").instantiate()
+	var packed := load("res://game/adventure/cabin_demo.tscn") as PackedScene
+	if packed == null:
+		push_error("Internet Cabin main scene failed to load")
+		get_tree().quit(1)
+		return
+	var instance := packed.instantiate()
 	add_child(instance)
 	var session: NucleusAdventureSession = instance.session
 	if session == null or session.current_page != &"overview_closed":
