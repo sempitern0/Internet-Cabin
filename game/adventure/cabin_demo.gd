@@ -14,6 +14,13 @@ const FONT := "res://assets/fonts/HomeVideo_Font_0_9/TrueType (.ttf)/HomeVideo-R
 var session: NucleusAdventureSession
 var page_data: Dictionary = {}
 var vhs_enabled := true
+var vhs_settings := {
+	"effect_strength": 0.55,
+	"color_offset_multiplier": 0.004,
+	"black_offset_multiplier": 0.1,
+	"color_offset": 0.005,
+	"blur_amount": 0.5,
+}
 var _hovered: StringName
 var _last_hint := ""
 
@@ -79,6 +86,7 @@ func _ready() -> void:
 	screen.hotspot_activated.connect(_clicked)
 	filters.toggled.connect(_toggle_vhs)
 	strength.value_changed.connect(_update_strength)
+	strength.set_value_no_signal(float(vhs_settings["effect_strength"]))
 	motion.toggled.connect(_toggle_breathing)
 	breathing.target = screen
 	_apply_shader()
@@ -168,12 +176,14 @@ func _apply_shader() -> void:
 	if result != OK:
 		push_error("VHS stack failed: %d" % result)
 	else:
-		_update_strength(strength.value)
+		for parameter in vhs_settings:
+			stack.set_uniform(&"vhs", StringName(parameter), vhs_settings[parameter])
 
 
 func _update_strength(value: float) -> void:
 	if stack.get_pass_material(&"vhs") != null:
-		stack.set_uniform(&"vhs", &"intensity", value)
+		vhs_settings["effect_strength"] = value
+		stack.set_uniform(&"vhs", &"effect_strength", value)
 
 
 func _toggle_breathing(on: bool) -> void:
