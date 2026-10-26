@@ -52,6 +52,11 @@ func _ready() -> void:
 			hotspot.id = StringName(spec["id"])
 			var box: Array = spec["rect"]
 			hotspot.bounds = Rect2(box[0], box[1], box[2], box[3])
+			if spec.has("polygon"):
+				var outline := PackedVector2Array()
+				for vertex in spec["polygon"]:
+					outline.append(Vector2(vertex[0], vertex[1]))
+				hotspot.polygon = outline
 			hotspot.priority = int(spec.get("priority", 0))
 			hotspot.description_key = StringName(spec["label"])
 			if spec.has("action"):
