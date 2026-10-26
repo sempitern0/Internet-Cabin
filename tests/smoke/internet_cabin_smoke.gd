@@ -21,11 +21,21 @@ func _run_smoke() -> void:
 		push_error("Internet Cabin boot failed")
 		get_tree().quit(1)
 		return
+	var renderer: NucleusScreenShaderStack = instance.stack
+	if renderer.stage_count() != 1 or renderer.get_pass_material(&"vhs") == null:
+		push_error("VHS pass not active on initial page")
+		get_tree().quit(1)
+		return
 	var pages: Array[StringName] = [&"desk", &"window", &"back_wall", &"bed",
 		&"door_closed", &"door_open", &"porch_open", &"porch_closed"]
 	for page_id in pages:
 		if session.change_page(page_id) != OK:
 			push_error("Unreachable cabin page: " + str(page_id))
+			get_tree().quit(1)
+			return
+		# Page transitions must not remove the game-owned VHS filter.
+		if renderer.stage_count() != 1:
+			push_error("VHS filter disappeared after page transition")
 			get_tree().quit(1)
 			return
 	if session.change_page(&"door_closed") != OK or session.activate_hotspot(&"open") != OK:
