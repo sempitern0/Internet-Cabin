@@ -1,0 +1,509 @@
+{
+  "schema": 1,
+  "initial_page": "overview_closed",
+  "canvas": [
+    1448,
+    1086
+  ],
+  "pages": [
+    {
+      "id": "overview_closed",
+      "title": "Interior · puerta cerrada",
+      "image": "cabin_base.png",
+      "hotspots": [
+        {
+          "id": "desk",
+          "label": "Examinar ordenador",
+          "rect": [
+            0.03,
+            0.32,
+            0.4,
+            0.44
+          ],
+          "target": "desk",
+          "priority": 3
+        },
+        {
+          "id": "window",
+          "label": "Asomarse a la ventana",
+          "rect": [
+            0.27,
+            0.06,
+            0.2,
+            0.36
+          ],
+          "target": "window",
+          "priority": 4
+        },
+        {
+          "id": "door",
+          "label": "Acercarse a la puerta",
+          "rect": [
+            0.78,
+            0.16,
+            0.2,
+            0.67
+          ],
+          "target": "door_closed",
+          "priority": 3
+        },
+        {
+          "id": "turn",
+          "label": "Girar hacia el otro lado",
+          "rect": [
+            0.46,
+            0.69,
+            0.3,
+            0.27
+          ],
+          "target": "back_wall",
+          "priority": 0
+        },
+        {
+          "id": "bed",
+          "label": "Acercarse a la cama",
+          "rect": [
+            0.63,
+            0.85,
+            0.17,
+            0.14
+          ],
+          "target": "bed",
+          "priority": 0
+        }
+      ]
+    },
+    {
+      "id": "overview_open",
+      "title": "Interior · puerta abierta",
+      "image": "cabin_base_open_door.png",
+      "hotspots": [
+        {
+          "id": "desk",
+          "label": "Examinar ordenador",
+          "rect": [
+            0.03,
+            0.32,
+            0.4,
+            0.44
+          ],
+          "target": "desk",
+          "priority": 3
+        },
+        {
+          "id": "window",
+          "label": "Asomarse a la ventana",
+          "rect": [
+            0.27,
+            0.06,
+            0.2,
+            0.36
+          ],
+          "target": "window",
+          "priority": 4
+        },
+        {
+          "id": "door",
+          "label": "Acercarse a la puerta abierta",
+          "rect": [
+            0.78,
+            0.16,
+            0.2,
+            0.67
+          ],
+          "target": "door_open",
+          "priority": 3
+        },
+        {
+          "id": "turn",
+          "label": "Girar hacia el otro lado",
+          "rect": [
+            0.46,
+            0.69,
+            0.3,
+            0.27
+          ],
+          "target": "back_wall",
+          "priority": 0
+        },
+        {
+          "id": "bed",
+          "label": "Acercarse a la cama",
+          "rect": [
+            0.63,
+            0.85,
+            0.17,
+            0.14
+          ],
+          "target": "bed",
+          "priority": 0
+        }
+      ]
+    },
+    {
+      "id": "desk",
+      "title": "El ordenador de empresa",
+      "image": "computer.png",
+      "hotspots": [
+        {
+          "id": "screen",
+          "label": "Mirar el escritorio del PC",
+          "rect": [
+            0.23,
+            0.29,
+            0.33,
+            0.39
+          ],
+          "action": {
+            "message_key": "computer_placeholder"
+          }
+        },
+        {
+          "id": "window",
+          "label": "Mirar por la ventana",
+          "rect": [
+            0.63,
+            0.05,
+            0.34,
+            0.5
+          ],
+          "target": "window",
+          "priority": 0
+        },
+        {
+          "id": "back",
+          "label": "Retroceder",
+          "rect": [
+            0.08,
+            0.73,
+            0.84,
+            0.25
+          ],
+          "target": "@overview",
+          "priority": 0
+        }
+      ]
+    },
+    {
+      "id": "window",
+      "title": "Ventana al bosque",
+      "image": "bed_window.png",
+      "hotspots": [
+        {
+          "id": "outside",
+          "label": "Observar el bosque",
+          "rect": [
+            0.25,
+            0.06,
+            0.63,
+            0.75
+          ],
+          "action": {
+            "message_key": "forest_placeholder"
+          }
+        },
+        {
+          "id": "desk",
+          "label": "Volver al ordenador",
+          "rect": [
+            0.01,
+            0.46,
+            0.2,
+            0.43
+          ],
+          "target": "desk",
+          "priority": 0
+        },
+        {
+          "id": "back",
+          "label": "Retroceder",
+          "rect": [
+            0.19,
+            0.84,
+            0.69,
+            0.15
+          ],
+          "target": "@overview",
+          "priority": 0
+        }
+      ]
+    },
+    {
+      "id": "back_wall",
+      "title": "Pared opuesta",
+      "image": "cabin_back.png",
+      "hotspots": [
+        {
+          "id": "bed",
+          "label": "Acercarse a la cama",
+          "rect": [
+            0.02,
+            0.5,
+            0.32,
+            0.4
+          ],
+          "target": "bed",
+          "priority": 3
+        },
+        {
+          "id": "window",
+          "label": "Observar ventana lateral",
+          "rect": [
+            0.04,
+            0.04,
+            0.31,
+            0.43
+          ],
+          "target": "window",
+          "priority": 2
+        },
+        {
+          "id": "desk",
+          "label": "Mirar el escritorio",
+          "rect": [
+            0.77,
+            0.33,
+            0.22,
+            0.6
+          ],
+          "target": "desk",
+          "priority": 1
+        },
+        {
+          "id": "back",
+          "label": "Volver a la vista general",
+          "rect": [
+            0.36,
+            0.74,
+            0.4,
+            0.24
+          ],
+          "target": "@overview",
+          "priority": 0
+        }
+      ]
+    },
+    {
+      "id": "bed",
+      "title": "Rincón de descanso",
+      "image": "cabin_bed.png",
+      "hotspots": [
+        {
+          "id": "window",
+          "label": "Acercarse a la ventana",
+          "rect": [
+            0.73,
+            0.01,
+            0.26,
+            0.42
+          ],
+          "target": "window",
+          "priority": 2
+        },
+        {
+          "id": "bedspread",
+          "label": "Inspeccionar la cama",
+          "rect": [
+            0.35,
+            0.4,
+            0.53,
+            0.31
+          ],
+          "action": {
+            "message_key": "bed_placeholder"
+          }
+        },
+        {
+          "id": "door",
+          "label": "Ir hacia la puerta",
+          "rect": [
+            0.2,
+            0.09,
+            0.23,
+            0.6
+          ],
+          "target": "@interior_door",
+          "priority": 1
+        },
+        {
+          "id": "back",
+          "label": "Retroceder",
+          "rect": [
+            0.23,
+            0.8,
+            0.66,
+            0.18
+          ],
+          "target": "back_wall",
+          "priority": 0
+        }
+      ]
+    },
+    {
+      "id": "door_closed",
+      "title": "Puerta · cerrada",
+      "image": "cabin_closed_door.png",
+      "hotspots": [
+        {
+          "id": "open",
+          "label": "Abrir la puerta",
+          "rect": [
+            0.29,
+            0.08,
+            0.44,
+            0.72
+          ],
+          "action": {
+            "next_screen": "door_open",
+            "set_flags": [
+              "door_open"
+            ]
+          }
+        },
+        {
+          "id": "back",
+          "label": "Retroceder",
+          "rect": [
+            0.09,
+            0.82,
+            0.82,
+            0.16
+          ],
+          "target": "@overview",
+          "priority": 0
+        }
+      ]
+    },
+    {
+      "id": "door_open",
+      "title": "Puerta · abierta",
+      "image": "cabin_open_door.png",
+      "hotspots": [
+        {
+          "id": "exit",
+          "label": "Salir al porche",
+          "rect": [
+            0.31,
+            0.12,
+            0.36,
+            0.67
+          ],
+          "target": "porch_open",
+          "priority": 2
+        },
+        {
+          "id": "close",
+          "label": "Cerrar la puerta",
+          "rect": [
+            0.75,
+            0.18,
+            0.24,
+            0.6
+          ],
+          "action": {
+            "next_screen": "door_closed",
+            "clear_flags": [
+              "door_open"
+            ]
+          }
+        },
+        {
+          "id": "back",
+          "label": "Retroceder",
+          "rect": [
+            0.04,
+            0.81,
+            0.68,
+            0.18
+          ],
+          "target": "@overview",
+          "priority": 0
+        }
+      ]
+    },
+    {
+      "id": "porch_closed",
+      "title": "Porche · puerta cerrada",
+      "image": "cabin_front_close_door.png",
+      "hotspots": [
+        {
+          "id": "open",
+          "label": "Abrir desde fuera",
+          "rect": [
+            0.36,
+            0.13,
+            0.33,
+            0.66
+          ],
+          "action": {
+            "next_screen": "porch_open",
+            "set_flags": [
+              "door_open"
+            ]
+          }
+        },
+        {
+          "id": "forest",
+          "label": "Mirar el bosque",
+          "rect": [
+            0.01,
+            0.11,
+            0.23,
+            0.65
+          ],
+          "action": {
+            "message_key": "forest_placeholder"
+          }
+        }
+      ]
+    },
+    {
+      "id": "porch_open",
+      "title": "Porche · puerta abierta",
+      "image": "cabin_front_open_door.png",
+      "hotspots": [
+        {
+          "id": "enter",
+          "label": "Entrar en la cabina",
+          "rect": [
+            0.37,
+            0.11,
+            0.33,
+            0.69
+          ],
+          "target": "door_open",
+          "priority": 2
+        },
+        {
+          "id": "close",
+          "label": "Cerrar desde fuera",
+          "rect": [
+            0.65,
+            0.19,
+            0.26,
+            0.65
+          ],
+          "action": {
+            "next_screen": "porch_closed",
+            "clear_flags": [
+              "door_open"
+            ]
+          }
+        },
+        {
+          "id": "forest",
+          "label": "Mirar el bosque",
+          "rect": [
+            0.01,
+            0.12,
+            0.25,
+            0.6
+          ],
+          "action": {
+            "message_key": "forest_placeholder"
+          }
+        }
+      ]
+    }
+  ]
+}
