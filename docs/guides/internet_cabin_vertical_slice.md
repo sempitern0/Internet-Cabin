@@ -67,3 +67,23 @@ Respiración actual: desplazamiento vertical sinusoidal ±0,9 % de la altura del
 ## Revisión de máscaras interactivas
 
 Se han ajustado las áreas de escritorio, monitor CRT, ventanas, estufa/entrada, cama y suelo mediante zonas más ajustadas y polígonos normalizados. La cámara ya no debe vibrar en zoom, sino desplazarse muy ligeramente arriba/abajo. Las máscaras de fuente están en `game/adventure/cabin_map.json`, en el campo `polygon` por pantalla; `NucleusScreenHotspot` realiza la intersección. Los rectángulos de retroceso se mantienen solo como bandas discretas junto al borde inferior. Se ha retirado el hotspot de cama no visible del plano general. Antes de dar por definitiva una máscara hay que verificarla en el motor sobre las imágenes reales, sin basarse únicamente en las coordenadas.
+
+## Navegación y menú de pausa (iteración actual)
+
+**Juego:** los hotspots de Nucleus continúan activos. En las zonas sin objeto, hacer clic en el extremo izquierdo (0–9 %), derecho (91–100 %) o borde inferior (89–100 %) permite navegar incluso sin mostrar iconos. La precedencia corresponde al hotspot real de un objeto, seguido por las bandas de navegación. Las rutas están declaradas en `game/adventure/cabin_map.json` como `edge_left`, `edge_right`, `back_target` y `navigation`. El historial de las pantallas visitadas permite recuperar una vista anterior con `@previous`. Se eliminaron las frágiles franjas `back` sobre fotografías como las del ordenador y la ventana.
+
+**TAB:** alterna las flechas de navegación aportadas por el proyecto. No activa ni desactiva la exploración: los márgenes siguen funcionando aunque las flechas estén ocultas. El HUD principal no muestra opciones durante la partida.
+
+**ESC:** abre/cierra un menú independiente en `CanvasLayer`. Solo ahí se modifica el filtro VHS, su intensidad y la respiración. Pausar bloquea la interacción con hotspots y la simulación normal, pero deja la interfaz en funcionamiento.
+
+**Shaders de prueba:** `Sin filtro`, `YUV sutil`, `VHS`, `VHS suave`, `VHS postproceso`, `Scanlines` y `Fathom`. Todos proceden del repositorio actual, en `shaders/` y `game/shaders/`. La selección es de previsualización en la pausa; cada shader conserva sus uniforms originales y una asignación mínima del control de intensidad. Algunos efectos son agresivos por diseño y no están calibrados para producción. El shader postprocesado recibe la textura de ruido `rgba-noise-medium.png` incluida en el repositorio.
+
+**Audio declarativo:** `game/adventure/cabin_audio_events.json` admite claves `page:<id>`, `interaction:<hotspot>` e `inspect:<message_key>`. Cada entrada contiene `stream` (ruta `res://`), `type` (`sfx`, `ambient` o `music`) y `fade` opcional. El adaptador delega sonidos a `NucleusAudio.play_one_shot` y música a `NucleusAudio.music.play`, sin nuevos Autoload. Las rutas están vacías como marcadores de posición hasta que se añadan pistas reales.
+
+### QA de navegación
+
+- Desde `desk` y `window`, verificar el retroceso por borde inferior y flechas visibles con TAB.
+- Desde puerta abierta o cerrada, comprobar que los bordes vuelven a vistas válidas y que el historial no impide salir.
+- Abrir pausa con ESC, cambiar entre los siete modos de vídeo, volver al juego, cambiar de pantalla y confirmar que el filtro elegido persiste.
+- Confirmar que el HUD no altera las zonas de imagen ni recibe el shader.
+- Probar en 4:3, ultrawide y vertical, y verificar el margen real de clic con cámara respirando.
