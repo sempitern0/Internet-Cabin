@@ -15,7 +15,8 @@ var view_order: Array[StringName] = []
 var vhs_enabled := true
 
 func _ready() -> void:
-	var font := load("res://assets/fonts/HomeVideo_Font_0_9/TrueType (.ttf)/HomeVideo-Regular.ttf") as Font
+	const FONT := "res://assets/fonts/HomeVideo_Font_0_9/TrueType (.ttf)/HomeVideo-Regular.ttf"
+	var font := load(FONT) as Font
 	if font != null:
 		theme = theme.duplicate(true)
 		theme.default_font = font
