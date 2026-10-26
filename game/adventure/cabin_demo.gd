@@ -118,6 +118,10 @@ func _input(event: InputEvent) -> void:
 	if event is InputEventMouseButton and not _paused and session != null:
 		var click := event as InputEventMouseButton
 		if click.button_index == MOUSE_BUTTON_LEFT:
+			if _show_guides and _arrows != null:
+				for guide in _arrows.get_children():
+					if guide is Control and guide.get_global_rect().has_point(click.position):
+						return
 			if click.pressed:
 				_press_page = session.current_page
 				_press_position = _pointer_image_point(click.position)
@@ -153,7 +157,7 @@ func _route_click(point: Vector2) -> void:
 	var hit := screen.hotspot_at(point)
 	if hit != null:
 		if hit.action == null and hit.destination != &"":
-			navigate(_resolve(hit.destination))
+			navigate(hit.destination)
 		else:
 			session.activate_hotspot(hit.id)
 		return
