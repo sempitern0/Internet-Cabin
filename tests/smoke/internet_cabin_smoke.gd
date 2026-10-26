@@ -48,6 +48,24 @@ func _run_smoke() -> void:
 		push_error("Empty floor should not activate a nonexistent bed")
 		get_tree().quit(1)
 		return
+	if instance._arrows.visible:
+		push_error("Navigation guides must start hidden")
+		get_tree().quit(1)
+		return
+	instance.set_paused(true)
+	if not instance._paused or instance.screen.interaction_enabled:
+		push_error("Pause did not lock image interactions")
+		get_tree().quit(1)
+		return
+	instance.set_paused(false)
+	if instance._paused or not instance.screen.interaction_enabled:
+		push_error("Resume did not restore interactions")
+		get_tree().quit(1)
+		return
+	if not instance.page_data[&"desk"].has("navigation"):
+		push_error("Desk is missing explicit navigation")
+		get_tree().quit(1)
+		return
 	var pages: Array[StringName] = [&"desk", &"window", &"back_wall", &"bed",
 		&"door_closed", &"door_open", &"porch_open", &"porch_closed"]
 	for page_id in pages:
