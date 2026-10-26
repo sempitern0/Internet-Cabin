@@ -1,6 +1,4 @@
-[gd_resource type="Theme" load_steps=3 format=3]
-
-[ext_resource type="FontFile" path="res://assets/fonts/HomeVideo_Font_0_9/TrueType (.ttf)/HomeVideo-Regular.ttf" id="1_homevideo"]
+[gd_resource type="Theme" format=3]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_button_disabled"]
 content_margin_left = 16.0
@@ -361,7 +359,6 @@ corner_radius_bottom_right = 6
 corner_radius_bottom_left = 6
 
 [resource]
-default_font = ExtResource("1_homevideo")
 default_font_size = 20
 Button/colors/font_color = Color(0.956863, 0.968627, 0.980392, 1)
 Button/colors/font_disabled_color = Color(0.705882, 0.717647, 0.741176, 1)
