@@ -1,0 +1,65 @@
+[gd_scene format=3 uid="uid://d3c0uoe1tjdur"]
+
+[ext_resource type="Script" uid="uid://cscqkrmgpeqkk" path="res://examples/validation/smart_decal_3d.gd" id="1"]
+[ext_resource type="Script" uid="uid://ddvfg1dp16ohh" path="res://components/gameplay/decals/smart_decal_3d.gd" id="2"]
+[ext_resource type="Texture2D" uid="uid://b2svyls1bcwhi" path="res://icon.svg" id="3"]
+
+[sub_resource type="Environment" id="Environment"]
+background_mode = 1
+background_color = Color(0.08, 0.09, 0.12, 1)
+ambient_light_source = 3
+ambient_light_color = Color(0.65, 0.68, 0.75, 1)
+ambient_light_energy = 0.7
+
+[sub_resource type="StandardMaterial3D" id="Material"]
+albedo_color = Color(0.35, 0.38, 0.42, 1)
+roughness = 0.8
+
+[sub_resource type="BoxMesh" id="FloorMesh"]
+material = SubResource("Material")
+size = Vector3(4, 0.3, 3)
+
+[sub_resource type="SphereMesh" id="SphereMesh"]
+material = SubResource("Material")
+radius = 1.0
+height = 2.0
+
+[node name="SmartDecalValidation" type="Node3D" unique_id=621241769]
+script = ExtResource("1")
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=1996348787]
+environment = SubResource("Environment")
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="." unique_id=1472252472]
+transform = Transform3D(0.90630776, 0.34618863, -0.24240388, 0, 0.57357645, 0.81915206, 0.42261827, -0.74240386, 0.5198368, 0, 0, 0)
+light_energy = 1.4
+shadow_enabled = true
+
+[node name="Floor" type="MeshInstance3D" parent="." unique_id=476613212]
+mesh = SubResource("FloorMesh")
+
+[node name="Sphere" type="MeshInstance3D" parent="." unique_id=1346285369]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.4, 1, 0)
+mesh = SubResource("SphereMesh")
+
+[node name="FloorDecal" type="Decal" parent="." unique_id=1063045024]
+size = Vector3(0.9, 0.08, 0.9)
+texture_albedo = ExtResource("3")
+normal_fade = 0.5
+upper_fade = 0.0
+lower_fade = 0.0
+script = ExtResource("2")
+randomize_roll = false
+
+[node name="SphereDecal" type="Decal" parent="." unique_id=1240252964]
+size = Vector3(0.9, 0.35, 0.9)
+texture_albedo = ExtResource("3")
+normal_fade = 0.35
+upper_fade = 0.0
+lower_fade = 0.0
+script = ExtResource("2")
+randomize_roll = false
+
+[node name="Camera3D" type="Camera3D" parent="." unique_id=1911395880]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.1, 6.2)
+current = true

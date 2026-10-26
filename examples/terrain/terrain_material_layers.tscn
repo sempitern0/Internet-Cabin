@@ -1,0 +1,65 @@
+[gd_scene load_steps=9 format=3]
+
+[ext_resource type="Script" path="res://modules/terrain/terrain_generator_3d.gd" id="1_generator"]
+[ext_resource type="Script" path="res://modules/terrain/terrain_profile.gd" id="2_profile"]
+[ext_resource type="Script" path="res://modules/terrain/terrain_layout.gd" id="3_layout"]
+[ext_resource type="Resource" path="res://examples/terrain/materials/terrain_height_layers.tres" id="4_material"]
+[ext_resource type="Script" path="res://examples/terrain/terrain_example_runner.gd" id="5_runner"]
+
+[sub_resource type="FastNoiseLite" id="FastNoiseLite_main"]
+seed = 7447
+frequency = 0.0055
+fractal_octaves = 4
+fractal_lacunarity = 2.1
+fractal_gain = 0.52
+
+[sub_resource type="Curve" id="Curve_elevation"]
+_min_value = 0.0
+_max_value = 1.0
+_data = [Vector2(0, 0), 0.0, 0.55, 0, 0, Vector2(0.45, 0.3), 0.75, 0.85, 0, 0, Vector2(1, 1), 1.1, 0.0, 0, 0]
+point_count = 3
+
+[sub_resource type="Resource" id="Resource_profile"]
+resource_local_to_scene = true
+script = ExtResource("2_profile")
+noise = SubResource("FastNoiseLite_main")
+size = Vector2(300, 300)
+resolution = 56
+base_height = 0.0
+height_scale = 72.0
+edge_floor_height = 0.0
+elevation_curve = SubResource("Curve_elevation")
+lod_levels = 2
+lod_distance_step = 120.0
+cast_shadows = false
+collision_mode = 0
+
+[sub_resource type="Resource" id="Resource_layout"]
+resource_local_to_scene = true
+script = ExtResource("3_layout")
+mode = 0
+
+[node name="TerrainMaterialLayersExample" type="Node3D"]
+
+[node name="Terrain" type="Node3D" parent="."]
+script = ExtResource("1_generator")
+profile = SubResource("Resource_profile")
+layout = SubResource("Resource_layout")
+material_profile = ExtResource("4_material")
+preview_resolution = 20
+patches_per_frame = 1
+
+[node name="ExampleRunner" type="Node" parent="."]
+script = ExtResource("5_runner")
+action = 1
+run_in_editor = false
+
+[node name="Sun" type="DirectionalLight3D" parent="."]
+rotation_degrees = Vector3(-52, -32, 0)
+light_energy = 1.15
+shadow_enabled = false
+
+[node name="Camera3D" type="Camera3D" parent="."]
+position = Vector3(0, 170, 245)
+rotation_degrees = Vector3(-31, 0, 0)
+current = true

@@ -1,0 +1,12 @@
+[gd_scene format=3 uid="uid://j0rq5l4wtjxw"]
+
+[ext_resource type="Script" uid="uid://chqlly0ixi7ra" path="res://examples/ui/ui_polish_lab.gd" id="1_script"]
+
+[node name="UIPolishLab" type="Control" unique_id=1901853259]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_script")

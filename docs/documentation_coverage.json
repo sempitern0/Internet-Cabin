@@ -1,0 +1,301 @@
+{
+  "schema_version": 1,
+  "scope": [
+    "core/*",
+    "modules/*",
+    "components/gameplay/*",
+    "components/ui/*",
+    "components/world/*"
+  ],
+  "coverage": {
+    "components/gameplay/actions": [
+      "docs/components/gameplay_actions_attributes_status.md"
+    ],
+    "components/gameplay/animation": [
+      "docs/components/animation_integration.md",
+      "docs/components/presentation_2d.md"
+    ],
+    "components/gameplay/attributes": [
+      "docs/components/gameplay_actions_attributes_status.md"
+    ],
+    "components/gameplay/camera": [
+      "docs/components/gameplay_movement_camera.md",
+      "docs/components/camera_game_feel.md"
+    ],
+    "components/gameplay/combat": [
+      "docs/components/gameplay_foundation.md",
+      "docs/components/rpg_composition.md"
+    ],
+    "components/gameplay/control": [
+      "docs/components/gameplay_movement_camera.md",
+      "docs/components/accessibility_preferences.md"
+    ],
+    "components/gameplay/decals": [
+      "docs/components/world_decals.md"
+    ],
+    "components/gameplay/feedback": [
+      "docs/components/camera_game_feel.md",
+      "docs/components/presentation_2d.md"
+    ],
+    "components/gameplay/interaction": [
+      "docs/components/gameplay_foundation.md"
+    ],
+    "components/gameplay/lifecycle": [
+      "docs/components/gameplay_foundation.md",
+      "docs/components/runtime_optimization.md"
+    ],
+    "components/gameplay/movement": [
+      "docs/components/gameplay_movement_camera.md",
+      "docs/components/2d_foundation.md",
+      "docs/components/runtime_placement_3d.md"
+    ],
+    "components/gameplay/pooling": [
+      "docs/components/gameplay_pooling_targeting.md",
+      "docs/components/runtime_optimization.md",
+      "docs/components/bullet_hell_2d.md"
+    ],
+    "components/gameplay/resources": [
+      "docs/components/gameplay_foundation.md"
+    ],
+    "components/gameplay/state": [
+      "docs/components/gameplay_foundation.md",
+      "docs/components/validated_action_history.md"
+    ],
+    "components/gameplay/status": [
+      "docs/components/gameplay_actions_attributes_status.md"
+    ],
+    "components/gameplay/targeting": [
+      "docs/components/gameplay_pooling_targeting.md"
+    ],
+    "components/gameplay/timing": [
+      "docs/components/gameplay_foundation.md",
+      "docs/components/runtime_optimization.md"
+    ],
+    "components/ui/accessibility": [
+      "docs/components/ui_and_accessibility.md",
+      "docs/components/accessibility_preferences.md"
+    ],
+    "components/ui/data": [
+      "docs/components/ui_and_accessibility.md",
+      "docs/components/ui_runtime_bindings.md",
+      "docs/components/runtime_optimization.md"
+    ],
+    "components/ui/effects": [
+      "docs/components/ui_and_accessibility.md"
+    ],
+    "components/ui/feedback": [
+      "docs/components/ui_and_accessibility.md"
+    ],
+    "components/ui/focus": [
+      "docs/components/ui_and_accessibility.md"
+    ],
+    "components/ui/gameplay": [
+      "docs/components/ui_and_accessibility.md"
+    ],
+    "components/ui/input": [
+      "docs/components/ui_and_accessibility.md"
+    ],
+    "components/ui/interaction": [
+      "docs/components/ui_and_accessibility.md",
+      "docs/components/image_screen_interaction.md"
+    ],
+    "components/ui/layout": [
+      "docs/components/ui_and_accessibility.md"
+    ],
+    "components/ui/localization": [
+      "docs/components/ui_and_accessibility.md",
+      "docs/components/localization_pipeline.md"
+    ],
+    "components/ui/modal": [
+      "docs/components/ui_and_accessibility.md"
+    ],
+    "components/ui/motion": [
+      "docs/components/ui_and_accessibility.md"
+    ],
+    "components/ui/navigation": [
+      "docs/components/ui_and_accessibility.md"
+    ],
+    "components/ui/presentation": [
+      "docs/components/ui_and_accessibility.md",
+      "docs/components/ui_runtime_bindings.md"
+    ],
+    "components/ui/text": [
+      "docs/components/ui_and_accessibility.md"
+    ],
+    "components/ui/theme": [
+      "docs/components/ui_theme_baseline.md"
+    ],
+    "components/ui/toast": [
+      "docs/components/ui_and_accessibility.md"
+    ],
+    "components/ui/tooltip": [
+      "docs/components/ui_and_accessibility.md"
+    ],
+    "components/ui/touch": [
+      "docs/modules/mobile.md"
+    ],
+    "components/ui/virtualization": [
+      "docs/components/ui_and_accessibility.md"
+    ],
+    "components/world/buoyancy": [
+      "docs/components/world_buoyancy.md"
+    ],
+    "components/world/environment": [
+      "docs/components/world_time_environment.md"
+    ],
+    "components/world/feedback": [
+      "docs/components/world_feedback.md"
+    ],
+    "components/world/fields": [
+      "docs/components/world_fields.md"
+    ],
+    "components/world/hex_grid": [
+      "docs/components/hex_grid_2d.md",
+      "docs/components/hex_grid_3d.md"
+    ],
+    "components/world/procedural": [
+      "docs/modules/flow_procedural_bullet_2d.md",
+      "docs/modules/flow_extensions_2d.md"
+    ],
+    "components/world/rendering": [
+      "docs/components/rendering_quality.md"
+    ],
+    "components/world/streaming": [
+      "docs/components/world_streaming.md"
+    ],
+    "components/world/surfaces": [
+      "docs/components/world_surfaces.md"
+    ],
+    "components/world/time": [
+      "docs/components/world_time_environment.md"
+    ],
+    "core/accessibility": [
+      "docs/components/ui_and_accessibility.md",
+      "docs/components/accessibility_preferences.md"
+    ],
+    "core/application": [
+      "docs/components/core_runtime.md"
+    ],
+    "core/audio": [
+      "docs/components/audio_save_scene_localization.md",
+      "docs/components/runtime_optimization.md"
+    ],
+    "core/diagnostics": [
+      "docs/components/core_runtime.md"
+    ],
+    "core/input": [
+      "docs/components/settings_and_input.md",
+      "docs/components/accessibility_preferences.md"
+    ],
+    "core/loading": [
+      "docs/components/resource_loading.md",
+      "docs/components/runtime_optimization.md"
+    ],
+    "core/localization": [
+      "docs/components/audio_save_scene_localization.md",
+      "docs/components/localization_pipeline.md"
+    ],
+    "core/platform": [
+      "docs/components/core_runtime.md"
+    ],
+    "core/save": [
+      "docs/components/audio_save_scene_localization.md",
+      "docs/components/save_system.md",
+      "docs/components/runtime_optimization.md"
+    ],
+    "core/scene_flow": [
+      "docs/components/audio_save_scene_localization.md"
+    ],
+    "core/settings": [
+      "docs/components/settings_and_input.md",
+      "docs/components/accessibility_preferences.md"
+    ],
+    "core/utils": [
+      "docs/components/core_runtime.md",
+      "docs/components/spatial_rect_index_2d.md",
+      "docs/components/numeric_utilities.md"
+    ],
+    "core/window": [
+      "docs/components/core_runtime.md"
+    ],
+    "modules/ai": [
+      "docs/modules/ai_navigation.md",
+      "docs/components/runtime_optimization.md"
+    ],
+    "modules/content_packs": [
+      "docs/modules/content_packs.md"
+    ],
+    "modules/development_tools": [
+      "docs/modules/development_tools.md",
+      "docs/modules/packed_scene_preflight.md"
+    ],
+    "modules/event_bus": [
+      "docs/modules/event_bus.md"
+    ],
+    "modules/inventory": [
+      "docs/modules/inventory_equipment.md"
+    ],
+    "modules/loot": [
+      "docs/modules/probability_loot.md"
+    ],
+    "modules/mobile": [
+      "docs/modules/mobile.md"
+    ],
+    "modules/networking": [
+      "docs/modules/networking.md",
+      "docs/modules/online_replication.md",
+      "docs/modules/network_prediction.md"
+    ],
+    "modules/performance": [
+      "docs/modules/performance.md",
+      "docs/components/runtime_optimization.md",
+      "docs/components/rendering_quality.md",
+      "docs/modules/performance_sections.md"
+    ],
+    "modules/platform_services": [
+      "docs/modules/platform_services.md"
+    ],
+    "modules/scatter": [
+      "docs/modules/scatter_generation.md"
+    ],
+    "modules/terrain": [
+      "docs/modules/terrain_generation.md",
+      "docs/modules/terrain_heightfield_constraints.md",
+      "docs/guides/composition_acceptance.md"
+    ],
+    "modules/world_state": [
+      "docs/modules/persistent_world_state.md"
+    ],
+    "modules/destruction": [
+      "docs/modules/destructible_meshes.md"
+    ],
+    "components/world/square_grid": [
+      "docs/components/square_grid.md"
+    ],
+    "components/world/modular_building": [
+      "docs/components/square_grid.md"
+    ],
+    "components/world/spline_paths": [
+      "docs/components/spline_paths.md"
+    ],
+    "components/world/biomes": [
+      "docs/components/biome_poi.md",
+      "docs/components/world_composition.md"
+    ],
+    "components/world/poi": [
+      "docs/components/biome_poi.md"
+    ],
+    "components/gameplay/encounters": [
+      "docs/components/rpg_composition.md"
+    ],
+    "components/gameplay/progression": [
+      "docs/components/rpg_composition.md"
+    ],
+    "components/gameplay/turns": [
+      "docs/components/turn_sessions.md"
+    ],
+    "modules/localization": [
+      "docs/components/localization_pipeline.md"
+    ]
+  }
+}

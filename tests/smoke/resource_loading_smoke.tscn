@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://a9k2m6v4q8t1r"]
+
+[ext_resource type="Script" uid="uid://e7r4u1t8m5v2k" path="res://tests/smoke/resource_loading_smoke.gd" id="1_runner"]
+
+[node name="NucleusResourceLoadingSmoke" type="Node"]
+script = ExtResource("1_runner")

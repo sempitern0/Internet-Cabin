@@ -1,0 +1,79 @@
+[gd_scene load_steps=9 format=3]
+
+[ext_resource type="Script" path="res://modules/terrain/terrain_generator_3d.gd" id="1_generator"]
+[ext_resource type="Resource" path="res://modules/terrain/presets/rugged_mountains.tres" id="2_profile"]
+[ext_resource type="Resource" path="res://examples/terrain/materials/terrain_height_layers.tres" id="3_material"]
+[ext_resource type="Script" path="res://examples/terrain/terrain_example_runner.gd" id="4_runner"]
+[ext_resource type="Script" path="res://examples/terrain/terrain_debug_lab.gd" id="5_debug"]
+
+[sub_resource type="StyleBoxFlat" id="PanelStyle"]
+bg_color = Color(0.025, 0.035, 0.05, 0.88)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_right = 8
+corner_radius_bottom_left = 8
+
+[node name="TerrainDebugLab" type="Node3D"]
+
+[node name="Terrain" type="Node3D" parent="."]
+script = ExtResource("1_generator")
+profile = ExtResource("2_profile")
+material_profile = ExtResource("3_material")
+debug_view = 1
+debug_wireframe = true
+debug_height_bands = 7
+debug_grid_scale = 20.0
+
+[node name="ExampleRunner" type="Node" parent="."]
+script = ExtResource("4_runner")
+action = 1
+run_in_editor = false
+
+[node name="Sun" type="DirectionalLight3D" parent="."]
+rotation_degrees = Vector3(-55, -35, 0)
+light_energy = 1.1
+shadow_enabled = false
+
+[node name="Camera3D" type="Camera3D" parent="."]
+position = Vector3(0, 185, 270)
+rotation_degrees = Vector3(-31, 0, 0)
+current = true
+
+[node name="DebugUI" type="CanvasLayer" parent="." node_paths=PackedStringArray("terrain")]
+script = ExtResource("5_debug")
+terrain = NodePath("../Terrain")
+
+[node name="Margin" type="MarginContainer" parent="DebugUI"]
+offset_left = 16.0
+offset_top = 16.0
+offset_right = 430.0
+offset_bottom = 390.0
+theme_override_constants/margin_left = 8
+theme_override_constants/margin_top = 8
+theme_override_constants/margin_right = 8
+theme_override_constants/margin_bottom = 8
+
+[node name="Panel" type="PanelContainer" parent="DebugUI/Margin"]
+theme_override_styles/panel = SubResource("PanelStyle")
+
+[node name="Inner" type="MarginContainer" parent="DebugUI/Margin/Panel"]
+theme_override_constants/margin_left = 14
+theme_override_constants/margin_top = 12
+theme_override_constants/margin_right = 14
+theme_override_constants/margin_bottom = 12
+
+[node name="VBox" type="VBoxContainer" parent="DebugUI/Margin/Panel/Inner"]
+
+[node name="Title" type="Label" parent="DebugUI/Margin/Panel/Inner/VBox"]
+text = "Terrain prototype / debug"
+
+[node name="DebugView" type="OptionButton" parent="DebugUI/Margin/Panel/Inner/VBox"]
+unique_name_in_owner = true
+
+[node name="Wireframe" type="CheckButton" parent="DebugUI/Margin/Panel/Inner/VBox"]
+unique_name_in_owner = true
+text = "Wireframe / triangles"
+
+[node name="Stats" type="Label" parent="DebugUI/Margin/Panel/Inner/VBox"]
+unique_name_in_owner = true
+text = "Waiting for terrain..."

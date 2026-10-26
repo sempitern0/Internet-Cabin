@@ -1,0 +1,155 @@
+name: Nucleus CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  GODOT_VERSION: 4.7.2-stable
+
+jobs:
+  validate:
+    name: Static, headless, and export validation
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v5
+
+      - name: Static repository checks
+        run: |
+          python3 scripts/ci/static_checks.py
+          python3 -m unittest discover -s scripts/ci -p test_run_godot_checked.py
+
+      - name: Documentation coverage audit
+        run: python3 scripts/ci/documentation_audit.py
+
+      - name: Use-case registry and links audit
+        run: |
+          python3 -m unittest discover -s scripts/ci -p test_use_case_audit.py
+          python3 scripts/ci/use_case_audit.py
+          python3 scripts/ci/build_use_case_catalog.py --check
+
+      - name: Productization contract audit
+        run: python3 scripts/ci/productization_audit.py
+
+      - name: Restore Godot cache
+        uses: actions/cache@v5
+        with:
+          path: |
+            .ci/godot
+            ~/.local/share/godot/export_templates/4.7.2.stable
+          key: godot-${{ runner.os }}-${{ env.GODOT_VERSION }}
+
+      - name: Install Godot editor
+        id: godot
+        shell: bash
+        env:
+          GODOT_INSTALL_EXPORT_TEMPLATES: "0"
+        run: |
+          GODOT_BIN="$(bash scripts/ci/install_godot.sh)"
+          echo "bin=$GODOT_BIN" >> "$GITHUB_OUTPUT"
+
+      - name: Import project headlessly
+        run: |
+          python3 scripts/ci/run_godot_checked.py "${{ steps.godot.outputs.bin }}" \
+            --headless \
+            --path . \
+            --import
+
+      - name: Validate gettext and editor localization pipeline
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y gettext
+          python3 scripts/localization/catalogs.py check core/localization/translations/*.po
+          python3 scripts/ci/check_localization_pipeline.py "${{ steps.godot.outputs.bin }}"
+          python3 scripts/ci/run_godot_checked.py "${{ steps.godot.outputs.bin }}" \
+            --headless --path . res://tests/smoke/localization_smoke.tscn
+
+      - name: Run native headless test scene
+        run: |
+          python3 scripts/ci/run_godot_checked.py "${{ steps.godot.outputs.bin }}" \
+            --headless \
+            --path . \
+            res://tests/headless/test_runner.tscn
+
+      - name: Run sustained bullet hell composition
+        run: |
+          python3 scripts/ci/run_godot_checked.py "${{ steps.godot.outputs.bin }}" \
+            --headless --path . res://tests/smoke/bullet_hell_smoke.tscn
+
+      - name: Run 2D presentation composition smoke scene
+        run: |
+          python3 scripts/ci/run_godot_checked.py "${{ steps.godot.outputs.bin }}" \
+            --headless --path . res://tests/smoke/presentation_2d_smoke.tscn
+
+      - name: Run asynchronous biome composition smoke scene
+        run: |
+          python3 scripts/ci/run_godot_checked.py "${{ steps.godot.outputs.bin }}" \
+            --headless \
+            --path . \
+            res://tests/smoke/world_composition_smoke.tscn
+
+      - name: Run bootstrap smoke scene
+        run: |
+          python3 scripts/ci/run_godot_checked.py "${{ steps.godot.outputs.bin }}" \
+            --headless \
+            --path . \
+            res://tests/smoke/smoke_main.tscn
+
+      - name: Run 3D locomotion physics smoke scene
+        run: |
+          python3 scripts/ci/run_godot_checked.py "${{ steps.godot.outputs.bin }}" \
+            --headless \
+            --path . \
+            res://tests/smoke/locomotion_3d_smoke.tscn
+
+      - name: Run resource loading smoke scene
+        run: |
+          python3 scripts/ci/run_godot_checked.py "${{ steps.godot.outputs.bin }}" \
+            --headless \
+            --path . \
+            res://tests/smoke/resource_loading_smoke.tscn
+
+      - name: Run localhost ENet replication smoke scene
+        run: |
+          python3 scripts/ci/run_godot_checked.py "${{ steps.godot.outputs.bin }}" \
+            --headless \
+            --path . \
+            res://tests/smoke/network_replication_smoke.tscn
+
+      - name: Verify composed world, boat and measured workload lifecycles
+        shell: bash
+        run: |
+          for scene in world_session boat_transfer adaptive_measured; do
+            python3 scripts/ci/run_godot_checked.py "${{ steps.godot.outputs.bin }}" \
+              --headless --path . "res://tests/smoke/${scene}_smoke.tscn"
+          done
+
+      - name: Install official export templates
+        shell: bash
+        run: |
+          GODOT_INSTALL_EXPORT_TEMPLATES=1 \
+            bash scripts/ci/install_godot.sh >/dev/null
+
+      - name: Smoke export Linux, Windows, and Web
+        id: smoke_export
+        env:
+          GODOT_BIN: ${{ steps.godot.outputs.bin }}
+        run: bash scripts/ci/smoke_exports.sh "$PWD"
+
+      - name: Upload smoke outputs
+        if: ${{ always() && steps.smoke_export.outcome != 'skipped' }}
+        uses: actions/upload-artifact@v6
+        with:
+          name: nucleus-smoke-exports
+          path: build/smoke/
+          if-no-files-found: warn
+          retention-days: 7

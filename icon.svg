@@ -1,0 +1,60 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128">
+  <title>Nucleus — Godot-native project foundation</title>
+  <desc>An original robot-core glyph integrated with Nucleus orbital systems.</desc>
+  <defs>
+    <linearGradient id="bg" x1="18" y1="14" x2="110" y2="116" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#171B2B"/>
+      <stop offset="1" stop-color="#0B0E18"/>
+    </linearGradient>
+    <linearGradient id="core" x1="42" y1="39" x2="88" y2="91" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#7C6CFF"/>
+      <stop offset="0.52" stop-color="#4F8FEF"/>
+      <stop offset="1" stop-color="#31D6D0"/>
+    </linearGradient>
+    <filter id="glow" x="-60%" y="-60%" width="220%" height="220%">
+      <feGaussianBlur stdDeviation="2.1" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <rect x="4" y="4" width="120" height="120" rx="25" fill="url(#bg)" stroke="#2C3450" stroke-width="2"/>
+
+  <g fill="none" stroke-linecap="round">
+    <ellipse cx="64" cy="64" rx="45" ry="21" transform="rotate(-28 64 64)"
+      stroke="#31D6D0" stroke-opacity=".52" stroke-width="2"/>
+    <ellipse cx="64" cy="64" rx="45" ry="21" transform="rotate(32 64 64)"
+      stroke="#7C6CFF" stroke-opacity=".52" stroke-width="2"/>
+    <circle cx="64" cy="64" r="44" stroke="#FFFFFF" stroke-opacity=".08" stroke-width="1"/>
+  </g>
+
+  <g filter="url(#glow)">
+    <circle cx="24" cy="48" r="5.5" fill="#31D6D0" stroke="#DFFFFD" stroke-width="1.5"/>
+    <circle cx="96" cy="36" r="5.5" fill="#7C6CFF" stroke="#E7E3FF" stroke-width="1.5"/>
+    <circle cx="103" cy="84" r="5.5" fill="#31D6D0" stroke="#DFFFFD" stroke-width="1.5"/>
+    <circle cx="36" cy="96" r="5.5" fill="#7C6CFF" stroke="#E7E3FF" stroke-width="1.5"/>
+  </g>
+
+  <path d="M39 54L44 44L51 48L57 41L64 46L71 41L77 48L84 44L89 54
+    L91 70Q91 84 79 89Q64 96 49 89Q37 84 37 70Z"
+    fill="url(#core)" stroke="#DFFBFF" stroke-opacity=".72" stroke-width="2" stroke-linejoin="round"/>
+
+  <path d="M45 61Q64 51 83 61V72Q83 82 74 85Q64 89 54 85Q45 82 45 72Z"
+    fill="#11182A" stroke="#FFFFFF" stroke-opacity=".16" stroke-width="1.5"/>
+
+  <path d="M49 58L45 51M79 58L83 51" stroke="#DFFBFF" stroke-width="2.5" stroke-linecap="round"/>
+
+  <g fill="#F7FCFF">
+    <ellipse cx="55" cy="69" rx="5" ry="5.5"/>
+    <ellipse cx="73" cy="69" rx="5" ry="5.5"/>
+  </g>
+  <g fill="#162039">
+    <circle cx="56" cy="70" r="2.2"/>
+    <circle cx="72" cy="70" r="2.2"/>
+  </g>
+
+  <path d="M54 79Q64 85 74 79" fill="none" stroke="#DFFBFF" stroke-width="2.5" stroke-linecap="round"/>
+  <circle cx="64" cy="65" r="29" fill="none" stroke="#FFFFFF" stroke-opacity=".08" stroke-width="1"/>
+</svg>

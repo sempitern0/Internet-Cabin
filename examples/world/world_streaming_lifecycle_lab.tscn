@@ -1,0 +1,79 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://examples/world/world_streaming_lifecycle_lab.gd" id="1_lab"]
+[ext_resource type="Script" path="res://components/world/streaming/world_stream_lifecycle.gd" id="2_stream"]
+
+[node name="WorldStreamingLifecycleLab" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_lab")
+
+[node name="WorldStreamLifecycle" type="Node" parent="."]
+script = ExtResource("2_stream")
+max_load_requests_per_frame = 1
+max_unload_requests_per_frame = 2
+
+[node name="Margin" type="MarginContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 32.0
+offset_top = 32.0
+offset_right = -32.0
+offset_bottom = -32.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="VBox" type="VBoxContainer" parent="Margin"]
+layout_mode = 2
+theme_override_constants/separation = 16
+
+[node name="Title" type="Label" parent="Margin/VBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 26
+text = "Nucleus World Streaming Lifecycle Lab"
+
+[node name="Description" type="Label" parent="Margin/VBox"]
+layout_mode = 2
+text = "Switch desired sets quickly to exercise bounded admission and stale completions."
+autowrap_mode = 2
+
+[node name="Actions" type="HBoxContainer" parent="Margin/VBox"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="RouteA" type="Button" parent="Margin/VBox/Actions"]
+layout_mode = 2
+text = "Route A"
+
+[node name="RouteB" type="Button" parent="Margin/VBox/Actions"]
+layout_mode = 2
+text = "Route B"
+
+[node name="Teleport" type="Button" parent="Margin/VBox/Actions"]
+layout_mode = 2
+text = "Teleport"
+
+[node name="Clear" type="Button" parent="Margin/VBox/Actions"]
+layout_mode = 2
+text = "Clear"
+
+[node name="FailNext" type="Button" parent="Margin/VBox/Actions"]
+layout_mode = 2
+text = "Fail next load"
+
+[node name="Retry" type="Button" parent="Margin/VBox/Actions"]
+layout_mode = 2
+text = "Retry failures"
+
+[node name="Status" type="RichTextLabel" parent="Margin/VBox"]
+custom_minimum_size = Vector2(0, 180)
+layout_mode = 2
+size_flags_vertical = 3
+fit_content = true
+text = "Waiting for lifecycle state..."

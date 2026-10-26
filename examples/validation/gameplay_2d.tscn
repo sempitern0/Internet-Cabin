@@ -1,0 +1,30 @@
+[gd_scene format=3 uid="uid://cbx1jgq8aur58"]
+
+[ext_resource type="Script" uid="uid://ckn27qe2yffs3" path="res://components/gameplay/resources/value_pool.gd" id="1_pool"]
+[ext_resource type="Script" uid="uid://cev2ipo7i7e8" path="res://components/gameplay/resources/regenerator.gd" id="2_regen"]
+[ext_resource type="Script" uid="uid://cfiwx72gbqkg8" path="res://components/gameplay/targeting/targeting_agent.gd" id="3_agent"]
+[ext_resource type="Script" uid="uid://cv1apckk5mq85" path="res://components/gameplay/targeting/sensors/target_area_sensor_2d.gd" id="4_sensor"]
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_validation"]
+radius = 160.0
+
+[node name="Gameplay2DValidation" type="Node2D" unique_id=198479588]
+
+[node name="Health" type="Node" parent="." unique_id=1990114555]
+script = ExtResource("1_pool")
+initial_value = 75.0
+
+[node name="Regenerator" type="Node" parent="Health" unique_id=2013841986]
+script = ExtResource("2_regen")
+amount_per_tick = 5.0
+tick_interval = 0.5
+delay_after_decrease = 1.0
+
+[node name="TargetingAgent" type="Node" parent="." unique_id=1772775142]
+script = ExtResource("3_agent")
+
+[node name="Sensor" type="Area2D" parent="TargetingAgent" unique_id=2098846048]
+script = ExtResource("4_sensor")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="TargetingAgent/Sensor" unique_id=1384007892]
+shape = SubResource("CircleShape2D_validation")

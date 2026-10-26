@@ -1,0 +1,45 @@
+name: Nucleus Release Package
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  package:
+    name: Build versioned source package
+    runs-on: ubuntu-24.04
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v5
+
+      - name: Static repository checks
+        run: python3 scripts/ci/static_checks.py
+
+      - name: Documentation coverage audit
+        run: python3 scripts/ci/documentation_audit.py
+
+      - name: Productization contract audit
+        run: python3 scripts/ci/productization_audit.py
+
+      - name: Read Nucleus version
+        id: version
+        shell: bash
+        run: echo "value=$(cat VERSION)" >> "$GITHUB_OUTPUT"
+
+      - name: Build release package
+        run: |
+          python3 scripts/package_release.py \
+            --skip-validation
+
+      - name: Upload release package
+        uses: actions/upload-artifact@v6
+        with:
+          name: nucleus-${{ steps.version.outputs.value }}
+          path: |
+            dist/releases/Nucleus-${{ steps.version.outputs.value }}.zip
+            dist/releases/Nucleus-${{ steps.version.outputs.value }}.zip.sha256
+          if-no-files-found: error
+          retention-days: 30

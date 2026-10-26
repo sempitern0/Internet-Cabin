@@ -1,0 +1,23 @@
+[Unit]
+Description=Nucleus dedicated game server
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=nucleus
+Group=nucleus
+WorkingDirectory=/opt/nucleus-server
+ExecStart=/opt/nucleus-server/NucleusServer.x86_64 -- --server --port=42069 --max-clients=16
+Restart=on-failure
+RestartSec=3
+TimeoutStopSec=20
+KillSignal=SIGTERM
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/opt/nucleus-server /var/lib/nucleus-server
+
+[Install]
+WantedBy=multi-user.target

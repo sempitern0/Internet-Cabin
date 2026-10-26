@@ -1,0 +1,6 @@
+[gd_scene format=3 uid="uid://cr4t08shnjqb"]
+
+[ext_resource type="Script" uid="uid://b36n0h68n6ohb" path="res://examples/ui/world_anchor_lab.gd" id="1_lab"]
+
+[node name="WorldAnchorLab" type="Node3D" unique_id=1828298727]
+script = ExtResource("1_lab")

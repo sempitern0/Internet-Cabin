@@ -1,0 +1,552 @@
+{
+  "schema_version": 1,
+  "intent": "Human and AI discovery by requested game behavior",
+  "cases": [
+    {
+      "domain": "Core",
+      "need": "Start a game, handle app pause/quit",
+      "nucleus_role": "Use lifecycle hooks without making a global GameManager",
+      "guide": "docs/components/core_runtime.md",
+      "game_owns": "Game boot scene and state transitions"
+    },
+    {
+      "domain": "Core",
+      "need": "Player changes resolution or fullscreen",
+      "nucleus_role": "Persist user intent and apply via settings owners",
+      "guide": "docs/components/settings_and_input.md",
+      "game_owns": "Graphics presets and art-quality tradeoffs"
+    },
+    {
+      "domain": "Core",
+      "need": "Rebind keyboard, mouse, gamepad controls",
+      "nucleus_role": "Use semantic input and device ownership",
+      "guide": "docs/guides/settings_input_quickstart.md",
+      "game_owns": "Names and meaning of game actions"
+    },
+    {
+      "domain": "Core",
+      "need": "Local co-op with multiple gamepads",
+      "nucleus_role": "Assign devices to seats, avoid global last-device assumptions",
+      "guide": "docs/guides/local_multiplayer_quickstart.md",
+      "game_owns": "Players, splitscreen and game modes"
+    },
+    {
+      "domain": "Core",
+      "need": "Play an impact sound or music",
+      "nucleus_role": "Use audio routing and one-shot policies",
+      "guide": "docs/guides/audio_quickstart.md",
+      "game_owns": "Sound assets, mixing and when to play"
+    },
+    {
+      "domain": "Core",
+      "need": "Switch menus, levels or restart",
+      "nucleus_role": "Use SceneFlow transitions instead of manual global switching",
+      "guide": "docs/guides/scene_flow_quickstart.md",
+      "game_owns": "Target scenes and player progress"
+    },
+    {
+      "domain": "Core",
+      "need": "Save and resume an adventure",
+      "nucleus_role": "Use Save contracts, codecs, sessions and latest-slot loading",
+      "guide": "docs/components/save_system.md",
+      "game_owns": "Serializable schema and migrations"
+    },
+    {
+      "domain": "Core",
+      "need": "Keep persistent object IDs stable",
+      "nucleus_role": "Separate persistent identity from instance and peer IDs",
+      "guide": "docs/modules/persistent_world_state.md",
+      "game_owns": "What must survive between sessions"
+    },
+    {
+      "domain": "Core",
+      "need": "Show a loading overlay or preload scenes",
+      "nucleus_role": "Use resource batch loading and progress presentation",
+      "guide": "docs/guides/resource_loading_quickstart.md",
+      "game_owns": "Assets to load and UX thresholds"
+    },
+    {
+      "domain": "Core",
+      "need": "Translate UI and gameplay text",
+      "nucleus_role": "Use localization adapters and keys",
+      "guide": "docs/guides/localization_quickstart.md",
+      "game_owns": "Translation content and typography"
+    },
+    {
+      "domain": "Core",
+      "need": "Respect reduced motion and accessibility options",
+      "nucleus_role": "Read neutral preferences and connect visuals to adapters",
+      "guide": "docs/components/accessibility_preferences.md",
+      "game_owns": "Accessibility presentation and gameplay assistance"
+    },
+    {
+      "domain": "Core",
+      "need": "Diagnose errors and log important operations",
+      "nucleus_role": "Use diagnostic scopes, reports and logging",
+      "guide": "docs/components/diagnostics.md",
+      "game_owns": "Relevant failure messages and privacy"
+    },
+    {
+      "domain": "Core",
+      "need": "Format large numbers or bound integer arithmetic",
+      "nucleus_role": "Use NumberFormatter and BoundedIntMath without game-specific counters",
+      "guide": "docs/components/numeric_utilities.md",
+      "game_owns": "Displayed units, numeric limits and economy policy"
+    },
+    {
+      "domain": "Gameplay",
+      "need": "Health, stamina, shield or mana",
+      "nucleus_role": "Compose ValuePool and optional regeneration",
+      "guide": "docs/components/gameplay_foundation.md",
+      "game_owns": "Resource rules and balancing"
+    },
+    {
+      "domain": "Gameplay",
+      "need": "Hits, damage, invulnerability",
+      "nucleus_role": "Compose hit payloads, damage receivers and collision nodes",
+      "guide": "docs/components/gameplay_foundation.md",
+      "game_owns": "Hitbox shape, damage formulas and teams"
+    },
+    {
+      "domain": "Gameplay",
+      "need": "Attack, dodge, cast or use an ability",
+      "nucleus_role": "Compose actions, requirements and effects",
+      "guide": "docs/components/gameplay_actions_attributes_status.md",
+      "game_owns": "Timing, damage and animation choreography"
+    },
+    {
+      "domain": "Gameplay",
+      "need": "Buffs, debuffs, poison and temporary modifiers",
+      "nucleus_role": "Use status and attribute contracts",
+      "guide": "docs/components/gameplay_actions_attributes_status.md",
+      "game_owns": "Status effects and combat balance"
+    },
+    {
+      "domain": "Gameplay",
+      "need": "Finite player or enemy states",
+      "nucleus_role": "Use scene-owned FSM with guarded transitions",
+      "guide": "docs/components/gameplay_foundation.md",
+      "game_owns": "Concrete state rules and animations"
+    },
+    {
+      "domain": "Gameplay",
+      "need": "Third-person character movement",
+      "nucleus_role": "Connect semantic input, native body motor and camera rig",
+      "guide": "docs/components/gameplay_movement_camera.md",
+      "game_owns": "Locomotion feel, speeds and traversal specifics"
+    },
+    {
+      "domain": "Gameplay",
+      "need": "2D platformer or top-down controls",
+      "nucleus_role": "Use 2D movement and input foundation",
+      "guide": "docs/components/2d_foundation.md",
+      "game_owns": "Platforming rules and camera feel"
+    },
+    {
+      "domain": "Gameplay",
+      "need": "Interaction prompt and usable objects",
+      "nucleus_role": "Compose interactable discovery and explicit actions",
+      "guide": "docs/components/gameplay_foundation.md",
+      "game_owns": "Interaction ranges, costs and effects"
+    },
+    {
+      "domain": "Gameplay",
+      "need": "Enemies detecting and selecting targets",
+      "nucleus_role": "Use sensors and composable filters/scorers",
+      "guide": "docs/components/gameplay_pooling_targeting.md",
+      "game_owns": "Aggro rules and combat behavior"
+    },
+    {
+      "domain": "Gameplay",
+      "need": "Repeated projectiles, enemies or pickups",
+      "nucleus_role": "Use spawner and object-pool contracts where warranted",
+      "guide": "docs/components/gameplay_pooling_targeting.md",
+      "game_owns": "Spawn composition and capacity"
+    },
+    {
+      "domain": "Gameplay",
+      "need": "Respawn or vehicle exit without clipping",
+      "nucleus_role": "Use real-shape placement queries in 2D or 3D",
+      "guide": "docs/components/safe_placement_queries.md",
+      "game_owns": "Ordered candidate transforms and failure handling"
+    },
+    {
+      "domain": "Gameplay",
+      "need": "Undo a game action after validation",
+      "nucleus_role": "Use data-only validated history only when native UndoRedo is insufficient",
+      "guide": "docs/components/validated_action_history.md",
+      "game_owns": "State schema, atomic restore and side effects"
+    },
+    {
+      "domain": "Gameplay",
+      "need": "Retarget a camera and add shake",
+      "nucleus_role": "Use camera and gameplay feedback components",
+      "guide": "docs/components/camera_game_feel.md",
+      "game_owns": "Intensity, accessibility and art direction"
+    },
+    {
+      "domain": "Gameplay",
+      "need": "AnimationTree character state integration",
+      "nucleus_role": "Compose animation adapters rather than replacing AnimationTree",
+      "guide": "docs/components/animation_integration.md",
+      "game_owns": "Animation assets and transition semantics"
+    },
+    {
+      "domain": "Gameplay",
+      "need": "Ragdoll on death or impact",
+      "nucleus_role": "Use humanoid ragdoll authoring helpers with native physics",
+      "guide": "docs/components/ragdoll_authoring_3d.md",
+      "game_owns": "Rig, reactions and cinematic choices"
+    },
+    {
+      "domain": "Gameplay",
+      "need": "Compose a grounded or floating 2D character",
+      "nucleus_role": "Use CharacterMotor2D with native motion_mode and shared intent sources",
+      "guide": "docs/components/2d_foundation.md",
+      "game_owns": "Jump rules, sprites, combat and level design"
+    },
+    {
+      "domain": "UI",
+      "need": "Build image-driven point-and-click screens with resolution-independent hotspots",
+      "nucleus_role": "Compose image-screen interaction with native Control input",
+      "guide": "docs/components/image_screen_interaction.md",
+      "game_owns": "Artwork, room graph, puzzle rules, accessible focus UI and save flags"
+    },
+    {
+      "domain": "UI",
+      "need": "Menus and keyboard/gamepad focus",
+      "nucleus_role": "Use focus, navigation and modal ownership",
+      "guide": "docs/components/ui_and_accessibility.md",
+      "game_owns": "Menu hierarchy and visual theme"
+    },
+    {
+      "domain": "UI",
+      "need": "Responsive HUD and safe area",
+      "nucleus_role": "Compose UI layout and scale policies",
+      "guide": "docs/components/ui_and_accessibility.md",
+      "game_owns": "Breakpoints, art and hierarchy"
+    },
+    {
+      "domain": "UI",
+      "need": "Inventory slots, health bars and data-bound widgets",
+      "nucleus_role": "Bind presentation to game-owned state",
+      "guide": "docs/components/ui_runtime_bindings.md",
+      "game_owns": "Inventory or combat semantics"
+    },
+    {
+      "domain": "UI",
+      "need": "World-space NPC nameplates and health bars",
+      "nucleus_role": "Use world anchor projection and layout separation",
+      "guide": "docs/components/ui_world_anchors.md",
+      "game_owns": "Label design, visibility authorization"
+    },
+    {
+      "domain": "UI",
+      "need": "Toasts, prompts and tooltips",
+      "nucleus_role": "Use scene-owned feedback and tooltip components",
+      "guide": "docs/components/ui_and_accessibility.md",
+      "game_owns": "Wording, timing and priority"
+    },
+    {
+      "domain": "UI",
+      "need": "Screen flashes, fades and reduced-motion variants",
+      "nucleus_role": "Use UI motion and effects adapters",
+      "guide": "docs/components/ui_and_accessibility.md",
+      "game_owns": "Effects art and intensity"
+    },
+    {
+      "domain": "UI",
+      "need": "Large scrolling equipment or item lists",
+      "nucleus_role": "Use UI virtualization and refresh coalescing",
+      "guide": "docs/components/runtime_optimization.md",
+      "game_owns": "List content and item selection rules"
+    },
+    {
+      "domain": "UI",
+      "need": "Touch screen controls",
+      "nucleus_role": "Use mobile touch input and semantic actions",
+      "guide": "docs/guides/mobile_quickstart.md",
+      "game_owns": "Touch layout, gestures and ergonomics"
+    },
+    {
+      "domain": "UI",
+      "need": "Select thousands of objects in a 2D editor",
+      "nucleus_role": "Use SpatialRectIndex2D as broad phase before exact hit testing",
+      "guide": "docs/components/spatial_rect_index_2d.md",
+      "game_owns": "Object IDs, draw order and precision selection"
+    },
+    {
+      "domain": "UI",
+      "need": "Show active input glyphs and prompts",
+      "nucleus_role": "Use input-source-aware UI adapters",
+      "guide": "docs/guides/settings_input_quickstart.md",
+      "game_owns": "Localized action labels and glyph art"
+    },
+    {
+      "domain": "World",
+      "need": "Procedural hills, islands and heightmaps",
+      "nucleus_role": "Use terrain profiles, generation and heightfield preprocessing",
+      "guide": "docs/modules/terrain_generation.md",
+      "game_owns": "Biome, geography and terrain art direction"
+    },
+    {
+      "domain": "World",
+      "need": "Remove heightmap needle peaks",
+      "nucleus_role": "Apply explicit heightfield slope constraints after shaping",
+      "guide": "docs/modules/terrain_heightfield_constraints.md",
+      "game_owns": "Physical slope budget and authored source"
+    },
+    {
+      "domain": "World",
+      "need": "Mask vegetation, danger or building zones",
+      "nucleus_role": "Read WorldMask3D scalar textures in world coordinates",
+      "guide": "docs/components/world_fields.md",
+      "game_owns": "Meaning of each mask channel"
+    },
+    {
+      "domain": "World",
+      "need": "Scatter rocks, grass and props deterministically",
+      "nucleus_role": "Compose region, profile, variants and scatter batches",
+      "guide": "docs/modules/scatter_generation.md",
+      "game_owns": "Biome frequency and visual assets"
+    },
+    {
+      "domain": "World",
+      "need": "Stream regions in and out near the player",
+      "nucleus_role": "Use lifecycle requests and asynchronous materialization",
+      "guide": "docs/components/world_streaming.md",
+      "game_owns": "Interest distances, retention and world topology"
+    },
+    {
+      "domain": "World",
+      "need": "Stagger scene construction to avoid spikes",
+      "nucleus_role": "Use materialization jobs and frame budgets",
+      "guide": "docs/components/materialization_queue.md",
+      "game_owns": "What work can be incremental"
+    },
+    {
+      "domain": "World",
+      "need": "Weather, time of day and world clock",
+      "nucleus_role": "Use world time, schedules and celestial drivers",
+      "guide": "docs/components/world_time_environment.md",
+      "game_owns": "Weather states, seasons and climate"
+    },
+    {
+      "domain": "World",
+      "need": "Dynamic light and shadow quality",
+      "nucleus_role": "Use lighting/rendering profiles and audits",
+      "guide": "docs/components/lighting_shadows_3d.md",
+      "game_owns": "Art direction and platform budgets"
+    },
+    {
+      "domain": "World",
+      "need": "Footsteps, wet surfaces or impact responses",
+      "nucleus_role": "Resolve semantic surfaces and dispatch game effects",
+      "guide": "docs/components/world_surfaces.md",
+      "game_owns": "Surface library, audio and effects"
+    },
+    {
+      "domain": "World",
+      "need": "Boat flotation or floating objects",
+      "nucleus_role": "Use analytical surface sampling plus buoyancy contracts",
+      "guide": "docs/components/world_buoyancy.md",
+      "game_owns": "Wave math, boat steering and tuning"
+    },
+    {
+      "domain": "World",
+      "need": "Footprints, wakes, rain impacts or temporary marks",
+      "nucleus_role": "Use bounded world stamp buffers and viewport rendering",
+      "guide": "docs/components/world_feedback.md",
+      "game_owns": "Stamp textures, shape and response policy"
+    },
+    {
+      "domain": "World",
+      "need": "Repeated lightweight surface FX",
+      "nucleus_role": "Use transient surface batches instead of thousands of Nodes",
+      "guide": "docs/components/world_scheduling_and_batched_fx.md",
+      "game_owns": "Effect spawning and artistic timing"
+    },
+    {
+      "domain": "World",
+      "need": "Decals that adapt to uneven ground",
+      "nucleus_role": "Use smart decals and ground sampling",
+      "guide": "docs/components/world_decals.md",
+      "game_owns": "Materials, duration and placement context"
+    },
+    {
+      "domain": "World",
+      "need": "Choosing a visual/collision LOD",
+      "nucleus_role": "Use rendering quality and explicit scene-owned policies",
+      "guide": "docs/components/rendering_quality.md",
+      "game_owns": "LOD thresholds and hardware targets"
+    },
+    {
+      "domain": "World",
+      "need": "Place, move or rotate 3D objects during play",
+      "nucleus_role": "Use PlacementSession3D and existing shape/surface validation",
+      "guide": "docs/components/runtime_placement_3d.md",
+      "game_owns": "Assets, costs, permissions and persistent placement records"
+    },
+    {
+      "domain": "World",
+      "need": "Build a 2D hex board or query hex neighbors",
+      "nucleus_role": "Use shared axial topology with optional CanvasItem board presentation",
+      "guide": "docs/components/hex_grid_2d.md",
+      "game_owns": "Tile assets, turn rules, passability and path costs"
+    },
+    {
+      "domain": "World",
+      "need": "Build a layered 3D hex board",
+      "nucleus_role": "Use the XZ adapter and scene-owned board over shared axial topology",
+      "guide": "docs/components/hex_grid_3d.md",
+      "game_owns": "Meshes, collision, layer rules and persistence"
+    },
+    {
+      "domain": "Optional modules",
+      "need": "Enemy decision utility and path following",
+      "nucleus_role": "Compose utility AI with native navigation and scheduled evaluations",
+      "guide": "docs/modules/ai_navigation.md",
+      "game_owns": "Behaviors, context scores and factions"
+    },
+    {
+      "domain": "Optional modules",
+      "need": "Carry, stack and equip items",
+      "nucleus_role": "Use inventory and equipment contracts",
+      "guide": "docs/modules/inventory_equipment.md",
+      "game_owns": "Items, slots, restrictions and UX"
+    },
+    {
+      "domain": "Optional modules",
+      "need": "Roll reproducible rewards or procedural drops",
+      "nucleus_role": "Use loot/probability helpers with server-side authority when online",
+      "guide": "docs/modules/probability_loot.md",
+      "game_owns": "Reward tables, rarity and economy"
+    },
+    {
+      "domain": "Optional modules",
+      "need": "Join LAN or host a multiplayer session",
+      "nucleus_role": "Use network transport/bootstrap helpers",
+      "guide": "docs/modules/networking.md",
+      "game_owns": "Authentication, routing and session policy"
+    },
+    {
+      "domain": "Optional modules",
+      "need": "Reconnect after losing a multiplayer connection",
+      "nucleus_role": "Use network recovery policy and restoration callbacks",
+      "guide": "docs/modules/network_recovery.md",
+      "game_owns": "Reauthentication and reconciling game state"
+    },
+    {
+      "domain": "Optional modules",
+      "need": "Estimate server simulation time",
+      "nucleus_role": "Use network clock sync over an authenticated transport",
+      "guide": "docs/modules/network_clock_sync.md",
+      "game_owns": "Trusted timestamps and authority"
+    },
+    {
+      "domain": "Optional modules",
+      "need": "Replicate transform, intent and resolved state",
+      "nucleus_role": "Use native replication plus intent and snapshot helpers",
+      "guide": "docs/modules/online_replication.md",
+      "game_owns": "Validation, prediction and combat outcomes"
+    },
+    {
+      "domain": "Optional modules",
+      "need": "Send only spatially relevant entities per peer",
+      "nucleus_role": "Use server-owned interest grid and admission controller",
+      "guide": "docs/modules/network_interest_management.md",
+      "game_owns": "Authorization and spawn visibility"
+    },
+    {
+      "domain": "Optional modules",
+      "need": "Support achievements and platform features",
+      "nucleus_role": "Use platform-service provider boundary",
+      "guide": "docs/modules/platform_services.md",
+      "game_owns": "Account, store and SDK dependencies"
+    },
+    {
+      "domain": "Optional modules",
+      "need": "Load DLC or data-only community content",
+      "nucleus_role": "Use content-pack trust boundaries",
+      "guide": "docs/modules/content_packs.md",
+      "game_owns": "Content policies and moderation"
+    },
+    {
+      "domain": "Optional modules",
+      "need": "Measure framerate, stutter, memory and work",
+      "nucleus_role": "Use performance sampler, monitors and reports",
+      "guide": "docs/modules/performance.md",
+      "game_owns": "Budget, representative workload and decisions"
+    },
+    {
+      "domain": "Optional modules",
+      "need": "Find expensive code sections and frame hitches",
+      "nucleus_role": "Use optional section profiling beside native profiler",
+      "guide": "docs/modules/performance_sections.md",
+      "game_owns": "Instrumented sections and performance targets"
+    },
+    {
+      "domain": "Optional modules",
+      "need": "Reduce update spikes and node churn",
+      "nucleus_role": "Use schedulers, gates, prewarm and native profiling evidence",
+      "guide": "docs/components/runtime_optimization.md",
+      "game_owns": "Permissible latency and gameplay rules"
+    },
+    {
+      "domain": "Optional modules",
+      "need": "Build safe editor commands",
+      "nucleus_role": "Use explicit development command registry, never eval",
+      "guide": "docs/modules/development_tools.md",
+      "game_owns": "Permitted operations and trust"
+    },
+    {
+      "domain": "Optional modules",
+      "need": "Validate a PackedScene before editor placement",
+      "nucleus_role": "Inspect stored SceneState without instantiation",
+      "guide": "docs/modules/packed_scene_preflight.md",
+      "game_owns": "Shape compatibility and authored metadata"
+    },
+    {
+      "domain": "Optional modules",
+      "need": "Communicate across distant independent systems",
+      "nucleus_role": "Use optional EventBus only when local signals are insufficient",
+      "guide": "docs/modules/event_bus.md",
+      "game_owns": "Event semantics and ownership"
+    },
+    {
+      "domain": "Optional modules",
+      "need": "Capture stable world flags and state",
+      "nucleus_role": "Use persistent world state with stable IDs",
+      "guide": "docs/modules/persistent_world_state.md",
+      "game_owns": "What the world must remember"
+    },
+    {
+      "domain": "Gameplay",
+      "need": "Animate four/eight-direction 2D sprites with temporary actions",
+      "nucleus_role": "Select native AnimatedSprite2D clips with explicit profile and lifecycle",
+      "guide": "docs/components/presentation_2d.md",
+      "game_owns": "Art, motion and aim sources, action semantics and terminal states"
+    },
+    {
+      "domain": "UI",
+      "need": "Show floating damage, healing or collection numbers in a 2D world",
+      "nucleus_role": "Bound scene-owned Labels and Tweens with configurable presentation",
+      "guide": "docs/components/presentation_2d.md",
+      "game_owns": "Confirmed events, text, numeric precision and styles"
+    },
+    {
+      "domain": "Core",
+      "need": "Import gettext translations and extract source templates from scenes and message Resources",
+      "nucleus_role": "Compose native PO/MO loading and extraction with optional editor tools and live text bindings",
+      "guide": "docs/components/localization_pipeline.md",
+      "game_owns": "Translation content, source scope, fonts, language review and runtime arguments"
+    },
+    {
+      "domain": "Gameplay",
+      "need": "Emit sustained circular, shotgun, line, lotus and spiral bullet patterns",
+      "nucleus_role": "Compose bounded emission, retained packed storage and native MultiMesh rendering",
+      "guide": "docs/components/bullet_hell_2d.md",
+      "game_owns": "Damage, teams, collision policy, cadence and target-device budgets"
+    }
+  ]
+}

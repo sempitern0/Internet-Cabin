@@ -1,0 +1,93 @@
+[gd_scene load_steps=9 format=3]
+
+[ext_resource type="Script" path="res://modules/terrain/terrain_generator_3d.gd" id="1_generator"]
+[ext_resource type="Resource" path="res://modules/terrain/presets/gentle_hills.tres" id="2_hills"]
+[ext_resource type="Resource" path="res://modules/terrain/presets/lowlands.tres" id="3_lowlands"]
+[ext_resource type="Resource" path="res://modules/terrain/presets/rugged_mountains.tres" id="4_mountains"]
+[ext_resource type="Resource" path="res://modules/terrain/presets/archipelago_island.tres" id="5_island"]
+[ext_resource type="Resource" path="res://examples/terrain/materials/terrain_height_layers.tres" id="6_material"]
+[ext_resource type="Script" path="res://examples/terrain/terrain_example_runner.gd" id="7_runner"]
+
+[node name="TerrainPresetPreviewGallery" type="Node3D"]
+
+[node name="GentleHills" type="Node3D" parent="."]
+position = Vector3(-230, 0, -170)
+script = ExtResource("1_generator")
+profile = ExtResource("2_hills")
+material_profile = ExtResource("6_material")
+preview_resolution = 20
+
+[node name="Lowlands" type="Node3D" parent="."]
+position = Vector3(230, 0, -170)
+script = ExtResource("1_generator")
+profile = ExtResource("3_lowlands")
+material_profile = ExtResource("6_material")
+preview_resolution = 20
+
+[node name="RuggedMountains" type="Node3D" parent="."]
+position = Vector3(-230, 0, 190)
+script = ExtResource("1_generator")
+profile = ExtResource("4_mountains")
+material_profile = ExtResource("6_material")
+preview_resolution = 20
+
+[node name="ArchipelagoIsland" type="Node3D" parent="."]
+position = Vector3(230, 0, 190)
+script = ExtResource("1_generator")
+profile = ExtResource("5_island")
+material_profile = ExtResource("6_material")
+preview_resolution = 20
+
+[node name="HillsPreview" type="Node" parent="."]
+script = ExtResource("7_runner")
+action = 0
+run_in_editor = true
+generator_path = NodePath("../GentleHills")
+
+[node name="LowlandsPreview" type="Node" parent="."]
+script = ExtResource("7_runner")
+action = 0
+run_in_editor = true
+generator_path = NodePath("../Lowlands")
+
+[node name="MountainsPreview" type="Node" parent="."]
+script = ExtResource("7_runner")
+action = 0
+run_in_editor = true
+generator_path = NodePath("../RuggedMountains")
+
+[node name="IslandPreview" type="Node" parent="."]
+script = ExtResource("7_runner")
+action = 0
+run_in_editor = true
+generator_path = NodePath("../ArchipelagoIsland")
+
+[node name="HillsLabel" type="Label3D" parent="."]
+position = Vector3(-230, 72, -170)
+text = "Gentle Hills"
+font_size = 42
+
+[node name="LowlandsLabel" type="Label3D" parent="."]
+position = Vector3(230, 58, -170)
+text = "Lowlands"
+font_size = 42
+
+[node name="MountainsLabel" type="Label3D" parent="."]
+position = Vector3(-230, 115, 190)
+text = "Rugged Mountains"
+font_size = 42
+
+[node name="IslandLabel" type="Label3D" parent="."]
+position = Vector3(230, 105, 190)
+text = "Archipelago Island"
+font_size = 42
+
+[node name="Sun" type="DirectionalLight3D" parent="."]
+rotation_degrees = Vector3(-55, -35, 0)
+light_energy = 1.1
+shadow_enabled = false
+
+[node name="Camera3D" type="Camera3D" parent="."]
+position = Vector3(0, 650, 760)
+rotation_degrees = Vector3(-40, 0, 0)
+current = true
