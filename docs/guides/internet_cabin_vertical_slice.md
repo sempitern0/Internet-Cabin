@@ -62,4 +62,8 @@ El shader `game/shaders/vhs_subtle.gdshader` utiliza el algoritmo suministrado d
 
 Valores de partida: `effect_strength=0.55`, `color_offset_multiplier=0.004`, `black_offset_multiplier=0.1`, `color_offset=0.005`, `blur_amount=0.5`. Se conservan en `vhs_settings` entre cambios de pantalla. `colorLookup` permanece declarado como en la fuente, pero aún no realiza una LUT.
 
-Respiración: escala base 1.014, amplitud ±0.006, frecuencia 0.115 Hz e interpolación exponencial de respuesta 4.5. El movimiento se aplica al mismo Control que resuelve hotspots, preservando la alineación. Verificar el margen de recorte en 4:3/16:9 y reducir amplitud si provoca incomodidad; permitir desactivarlo.
+Respiración actual: desplazamiento vertical sinusoidal ±0,9 % de la altura del lienzo, frecuencia 0,135 Hz, interpolación exponencial de respuesta 5, y sobremargen estable del 3 % para ocultar bordes. No hay zoom pulsante: imagen y hotspots se mueven como un mismo Control, manteniendo la alineación.
+
+## Revisión de máscaras interactivas
+
+Se han ajustado las áreas de escritorio, monitor CRT, ventanas, estufa/entrada, cama y suelo mediante zonas más ajustadas y polígonos normalizados. La cámara ya no debe vibrar en zoom, sino desplazarse muy ligeramente arriba/abajo. Las máscaras de fuente están en `game/adventure/cabin_map.json`, en el campo `polygon` por pantalla; `NucleusScreenHotspot` realiza la intersección. Los rectángulos de retroceso se mantienen solo como bandas discretas junto al borde inferior. Se ha retirado el hotspot de cama no visible del plano general. Antes de dar por definitiva una máscara hay que verificarla en el motor sobre las imágenes reales, sin basarse únicamente en las coordenadas.
