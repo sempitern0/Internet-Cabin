@@ -117,7 +117,10 @@
           "target": "back_wall",
           "priority": 0
         }
-      ]
+      ],
+      "back_target": "back_wall",
+      "edge_left": "back_wall",
+      "edge_right": "@interior_door"
     },
     {
       "id": "overview_open",
@@ -230,7 +233,10 @@
           "target": "back_wall",
           "priority": 0
         }
-      ]
+      ],
+      "back_target": "back_wall",
+      "edge_left": "back_wall",
+      "edge_right": "@interior_door"
     },
     {
       "id": "desk",
@@ -279,20 +285,11 @@
           ],
           "target": "window",
           "priority": 0
-        },
-        {
-          "id": "back",
-          "label": "Retroceder",
-          "rect": [
-            0.26,
-            0.875,
-            0.5,
-            0.12
-          ],
-          "target": "@overview",
-          "priority": 0
         }
-      ]
+      ],
+      "back_target": "overview_closed",
+      "edge_left": "window",
+      "edge_right": "window"
     },
     {
       "id": "window",
@@ -341,20 +338,11 @@
           ],
           "target": "desk",
           "priority": 0
-        },
-        {
-          "id": "back",
-          "label": "Retroceder",
-          "rect": [
-            0.3,
-            0.86,
-            0.39,
-            0.13
-          ],
-          "target": "@overview",
-          "priority": 0
         }
-      ]
+      ],
+      "back_target": "desk",
+      "edge_left": "desk",
+      "edge_right": "desk"
     },
     {
       "id": "back_wall",
@@ -396,20 +384,11 @@
           ],
           "target": "desk",
           "priority": 1
-        },
-        {
-          "id": "back",
-          "label": "Volver a la vista general",
-          "rect": [
-            0.39,
-            0.88,
-            0.27,
-            0.11
-          ],
-          "target": "@overview",
-          "priority": 0
         }
-      ]
+      ],
+      "back_target": "overview_closed",
+      "edge_left": "bed",
+      "edge_right": "@overview"
     },
     {
       "id": "bed",
@@ -470,20 +449,11 @@
           ],
           "target": "@interior_door",
           "priority": 1
-        },
-        {
-          "id": "back",
-          "label": "Retroceder",
-          "rect": [
-            0.31,
-            0.87,
-            0.38,
-            0.11
-          ],
-          "target": "back_wall",
-          "priority": 0
         }
-      ]
+      ],
+      "back_target": "back_wall",
+      "edge_left": "back_wall",
+      "edge_right": "@interior_door"
     },
     {
       "id": "door_closed",
@@ -505,20 +475,11 @@
               "door_open"
             ]
           }
-        },
-        {
-          "id": "back",
-          "label": "Retroceder",
-          "rect": [
-            0.25,
-            0.9,
-            0.5,
-            0.09
-          ],
-          "target": "@overview",
-          "priority": 0
         }
-      ]
+      ],
+      "back_target": "overview_closed",
+      "edge_left": "back_wall",
+      "edge_right": "porch_open"
     },
     {
       "id": "door_open",
@@ -552,20 +513,11 @@
               "door_open"
             ]
           }
-        },
-        {
-          "id": "back",
-          "label": "Retroceder",
-          "rect": [
-            0.2,
-            0.9,
-            0.5,
-            0.09
-          ],
-          "target": "@overview",
-          "priority": 0
         }
-      ]
+      ],
+      "back_target": "overview_open",
+      "edge_left": "back_wall",
+      "edge_right": "porch_open"
     },
     {
       "id": "porch_closed",
@@ -601,7 +553,10 @@
             "message_key": "forest_placeholder"
           }
         }
-      ]
+      ],
+      "back_target": "porch_open",
+      "edge_left": "@interior_door",
+      "edge_right": "@interior_door"
     },
     {
       "id": "porch_open",
@@ -649,7 +604,10 @@
             "message_key": "forest_placeholder"
           }
         }
-      ]
+      ],
+      "back_target": "door_open",
+      "edge_left": "@interior_door",
+      "edge_right": "@interior_door"
     }
   ]
 }
