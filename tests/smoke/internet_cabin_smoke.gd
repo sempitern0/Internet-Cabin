@@ -26,6 +26,28 @@ func _run_smoke() -> void:
 		push_error("VHS pass not active on initial page")
 		get_tree().quit(1)
 		return
+	var breathing: InternetCabinBreathing = instance.breathing
+	if breathing.vertical_amplitude < 0.005:
+		push_error("Vertical breathing amplitude is unexpectedly low")
+		get_tree().quit(1)
+		return
+	if session.change_page(&"desk") != OK:
+		push_error("Desk page unavailable")
+		get_tree().quit(1)
+		return
+	var pc_region := instance.screen.hotspot_at(Vector2(0.36, 0.45))
+	if pc_region == null or pc_region.id != &"screen":
+		push_error("CRT interactive polygon does not cover the CRT")
+		get_tree().quit(1)
+		return
+	if session.change_page(&"overview_closed") != OK:
+		push_error("Overview unavailable")
+		get_tree().quit(1)
+		return
+	if instance.screen.hotspot_at(Vector2(0.68, 0.92)) != null:
+		push_error("Empty floor should not activate a nonexistent bed")
+		get_tree().quit(1)
+		return
 	var pages: Array[StringName] = [&"desk", &"window", &"back_wall", &"bed",
 		&"door_closed", &"door_open", &"porch_open", &"porch_closed"]
 	for page_id in pages:
