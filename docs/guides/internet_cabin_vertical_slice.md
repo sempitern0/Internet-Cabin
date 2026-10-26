@@ -97,3 +97,10 @@ Se han ajustado las áreas de escritorio, monitor CRT, ventanas, estufa/entrada,
 - El historial se mantiene como mecanismo adicional, no como la única ruta de salida. Los tests smoke comprueban que todos los acercamientos cargan y pueden retornar a su nodo padre.
 
 Revisión manual pendiente: contraste y tamaño percibido de cursores en monitores con escala DPI distinta de 100 %, posiciones exactas de flechas y preferencias individuales sobre tamaño y amplitud de bordes.
+
+
+## Corrección de interacción (router único)
+
+La navegación física por ratón es propiedad de `cabin_demo.gd`: transforma coordenadas de viewport a UV reales del control animado, espera a soltar el botón y usa `screen.hotspot_at` y `session.activate_hotspot` cuando corresponde. `NucleusImageScreen` sigue resolviendo polígonos, prioridades y foco por teclado, pero no recibe eventos GUI de ratón en esta composición para evitar doble despacho. La banda inferior mínima (último 6,5 %) se reserva al retorno fijo de `back_target`; fuera de ella los hotspots tienen prioridad sobre los bordes. Los iconos mostrados con TAB conservan sus controles de UI.
+
+Las comprobaciones automatizadas prueban **clics** sobre el CRT y cuadro, el recorrido hacia la cama y el regreso desde la ventana, no únicamente la carga de escenas. Una vista nueva debe disponer de una ruta concreta de salida sin depender exclusivamente del historial. Se han resuelto los avisos `UNASSIGNED_VARIABLE` (selección Nucleus) y `SHADOWED_VARIABLE_BASE_CLASS` (variables del juego).
