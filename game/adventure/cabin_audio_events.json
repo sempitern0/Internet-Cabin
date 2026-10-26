@@ -1,0 +1,33 @@
+{
+  "page:overview_closed": {
+    "type": "ambient",
+    "stream": "",
+    "description": "Forest wind bed on first entering cabin"
+  },
+  "page:porch_open": {
+    "type": "music",
+    "stream": "",
+    "fade": 1.5,
+    "description": "Optional exterior tension theme"
+  },
+  "inspect:computer_placeholder": {
+    "type": "sfx",
+    "stream": "",
+    "description": "CRT hum or UI beep"
+  },
+  "inspect:forest_placeholder": {
+    "type": "sfx",
+    "stream": "",
+    "description": "Trees or distant movement"
+  },
+  "inspect:bed_placeholder": {
+    "type": "sfx",
+    "stream": "",
+    "description": "Fabric rustle"
+  },
+  "interaction:door_open": {
+    "type": "sfx",
+    "stream": "",
+    "description": "Wooden door creak"
+  }
+}
