@@ -34,6 +34,8 @@ var _shader_strength: HSlider
 var _cursor_normal: Texture2D
 var _cursor_hover: Texture2D
 var _cursor_active := false
+var _press_page: StringName
+var _press_position := Vector2(-1, -1)
 
 
 func _ready() -> void:
@@ -101,6 +103,8 @@ func _ready() -> void:
 	session.page_changed.connect(_on_page_changed)
 	session.message_requested.connect(_on_message)
 	screen.background_activated.connect(_on_background)
+	# One owner for physical clicks: the game routes edges and hotspots.
+	screen.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_cursor_normal = _load_cursor("res://assets/cursors/Circle.png")
 	_cursor_hover = _load_cursor("res://assets/cursors/MidRing.png")
 	_apply_game_cursor(false)
@@ -111,24 +115,49 @@ func _ready() -> void:
 
 
 func _input(event: InputEvent) -> void:
-	if not _paused and event is InputEventMouseButton:
+	if event is InputEventMouseButton and not _paused and session != null:
 		var click := event as InputEventMouseButton
-		if click.pressed and click.button_index == MOUSE_BUTTON_LEFT and session != null:
-			var local := screen.get_global_transform_with_canvas().affine_inverse()
-			var point := screen.normalized_point(local * click.position)
-			if point.x >= 0.0 and point.x <= 1.0 and point.y >= 0.0 and point.y <= 1.0:
-				if point.y >= 0.93 or point.x <= 0.065 or point.x >= 0.935:
-					_navigate_edge(point)
-					get_viewport().set_input_as_handled()
-					return
+		if click.button_index == MOUSE_BUTTON_LEFT:
+			if click.pressed:
+				_press_page = session.current_page
+				_press_position = _pointer_image_point(click.position)
+			else:
+				var point := _pointer_image_point(click.position)
+				if _press_page == session.current_page and point.x >= 0.0:
+					if point.distance_to(_press_position) <= 0.025:
+						_route_click(point)
+				_press_page = &""
+				_press_position = Vector2(-1, -1)
+			get_viewport().set_input_as_handled()
+			return
 	if event is InputEventKey and event.pressed and not event.echo:
 		if event.keycode == KEY_ESCAPE:
 			set_paused(not _paused)
 			get_viewport().set_input_as_handled()
 		elif event.keycode == KEY_TAB and not _paused:
 			_show_guides = not _show_guides
-			_arrows.visible = _show_guides
+			_update_arrows()
 			get_viewport().set_input_as_handled()
+
+
+func _pointer_image_point(viewport_point: Vector2) -> Vector2:
+	var inverted := screen.get_global_transform_with_canvas().affine_inverse()
+	return screen.normalized_point(inverted * viewport_point)
+
+
+func _route_click(point: Vector2) -> void:
+	# Reserve only a thin strip for unconditional retreat; objects win elsewhere.
+	if point.y >= 0.935:
+		navigate(_fallback_back())
+		return
+	var hit := screen.hotspot_at(point)
+	if hit != null:
+		if hit.action == null and hit.destination != &"":
+			navigate(_resolve(hit.destination))
+		else:
+			session.activate_hotspot(hit.id)
+		return
+	_navigate_edge(point)
 
 
 func _process(_delta: float) -> void:
@@ -150,7 +179,7 @@ func _resolve(target: StringName) -> StringName:
 		&"@interior_door":
 			return &"door_open" if session.has_flag(&"door_open") else &"door_closed"
 		&"@previous":
-			return history.back() if not history.is_empty() else _fallback_back()
+			return _fallback_back()
 	return target
 
 
@@ -297,8 +326,8 @@ func _make_hud() -> void:
 	title.text = "PAUSA · INTERNET CABIN"
 	column.add_child(title)
 	_shader_select = OptionButton.new()
-	for name in SHADERS:
-		_shader_select.add_item(name)
+	for shader_label in SHADERS:
+		_shader_select.add_item(shader_label)
 	_shader_select.select(SHADERS.keys().find(_shader_name))
 	column.add_child(_shader_select)
 	_shader_select.item_selected.connect(_on_shader_selected)
@@ -361,8 +390,8 @@ func _on_strength(value: float) -> void:
 
 
 func _apply_uniforms() -> void:
-	var material := stack.get_pass_material(&"vhs")
-	if material == null:
+	var shader_material := stack.get_pass_material(&"vhs")
+	if shader_material == null:
 		return
 	if _shader_name == "YUV sutil":
 		stack.set_uniform(&"vhs", &"effect_strength", _intensity)
