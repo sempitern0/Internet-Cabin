@@ -181,8 +181,8 @@ func _apply_shader() -> void:
 
 
 func _update_strength(value: float) -> void:
+	vhs_settings["effect_strength"] = value
 	if stack.get_pass_material(&"vhs") != null:
-		vhs_settings["effect_strength"] = value
 		stack.set_uniform(&"vhs", &"effect_strength", value)
 
 
