@@ -10,7 +10,7 @@ uniform float vignette_strength : hint_range(0.0, 1.0) = 0.78;
 uniform float scanline_strength : hint_range(0.0, 1.0) = 0.016;
 uniform float distortion_strength : hint_range(0.0, 1.0) = 0.1;
 uniform float ghost_strength : hint_range(0.0,0.3)=0.12;
-uniform float flicker_strength : hint_range(0.0, 0.1) = 0.005; 
+uniform float flicker_strength : hint_range(0.0, 0.1) = 0.005;
 
 float rand(vec2 co) {
     return fract(sin(dot(co, vec2(12.9898,78.233))) * 43758.5453);
