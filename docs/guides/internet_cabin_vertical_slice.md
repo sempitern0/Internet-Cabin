@@ -87,3 +87,13 @@ Se han ajustado las áreas de escritorio, monitor CRT, ventanas, estufa/entrada,
 - Abrir pausa con ESC, cambiar entre los siete modos de vídeo, volver al juego, cambiar de pantalla y confirmar que el filtro elegido persiste.
 - Confirmar que el HUD no altera las zonas de imagen ni recibe el shader.
 - Probar en 4:3, ultrawide y vertical, y verificar el margen real de clic con cámara respirando.
+
+## Controles y rutas — revisión de continuidad
+
+- Cursor propio únicamente durante la partida: `assets/cursors/Circle.png` (normal) y `assets/cursors/MidRing.png` (sobre interacción o zonas de borde). Se preparan en memoria con un máximo de 32 píxeles y `Image.INTERPOLATE_NEAREST`; el centro es el punto activo, sin escalado del CanvasLayer ni del shader. La pausa restaura el cursor del sistema.
+- Las flechas de ayuda, activadas por TAB, se anclan a las esquinas inferiores y al centro inferior, con botones de 38×40. Los márgenes laterales exteriores de 6,5 % y la banda inferior del 7 % se gestionan en `_input` antes de que los hotspots puedan capturarlos; el resto permanece interactivo de manera normal.
+- `Fathom` es el efecto inicial; todos los demás shaders permanecen seleccionables desde pausa.
+- El mapa tiene 18 vistas, incluidas las ocho imágenes nuevas (`bed_close`, `bed_windows`, `entry_picture`, `desktop_tower`, `computer_screen`, `cabin_shelf`, `cabin_clothes`, `cabin_boots`). Cada acercamiento posee `back_target`, `edge_left` y `edge_right` explícitos; los botones inferiores vuelven al nodo madre. El acceso a cama también está disponible desde la vista principal mediante un hotspot visible.
+- El historial se mantiene como mecanismo adicional, no como la única ruta de salida. Los tests smoke comprueban que todos los acercamientos cargan y pueden retornar a su nodo padre.
+
+Revisión manual pendiente: contraste y tamaño percibido de cursores en monitores con escala DPI distinta de 100 %, posiciones exactas de flechas y preferencias individuales sobre tamaño y amplitud de bordes.
