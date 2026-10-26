@@ -15,60 +15,106 @@
           "id": "desk",
           "label": "Examinar ordenador",
           "rect": [
-            0.03,
-            0.32,
-            0.4,
-            0.44
+            0.005,
+            0.36,
+            0.335,
+            0.42
           ],
           "target": "desk",
-          "priority": 3
+          "priority": 3,
+          "polygon": [
+            [
+              0.005,
+              0.4
+            ],
+            [
+              0.2,
+              0.4
+            ],
+            [
+              0.33,
+              0.45
+            ],
+            [
+              0.33,
+              0.75
+            ],
+            [
+              0.02,
+              0.78
+            ]
+          ]
         },
         {
           "id": "window",
           "label": "Asomarse a la ventana",
           "rect": [
-            0.27,
-            0.06,
-            0.2,
-            0.36
+            0.258,
+            0.13,
+            0.225,
+            0.34
           ],
           "target": "window",
-          "priority": 4
+          "priority": 4,
+          "polygon": [
+            [
+              0.268,
+              0.13
+            ],
+            [
+              0.455,
+              0.13
+            ],
+            [
+              0.46,
+              0.45
+            ],
+            [
+              0.274,
+              0.45
+            ]
+          ]
         },
         {
           "id": "door",
           "label": "Acercarse a la puerta",
           "rect": [
-            0.78,
-            0.16,
-            0.2,
-            0.67
+            0.778,
+            0.13,
+            0.21,
+            0.74
           ],
           "target": "door_closed",
-          "priority": 3
+          "priority": 3,
+          "polygon": [
+            [
+              0.78,
+              0.135
+            ],
+            [
+              0.985,
+              0.13
+            ],
+            [
+              0.985,
+              0.85
+            ],
+            [
+              0.78,
+              0.85
+            ]
+          ]
         },
         {
           "id": "turn",
           "label": "Girar hacia el otro lado",
           "rect": [
-            0.46,
-            0.69,
-            0.3,
-            0.27
+            0.4,
+            0.84,
+            0.28,
+            0.15
           ],
           "target": "back_wall",
-          "priority": 0
-        },
-        {
-          "id": "bed",
-          "label": "Acercarse a la cama",
-          "rect": [
-            0.63,
-            0.85,
-            0.17,
-            0.14
-          ],
-          "target": "bed",
           "priority": 0
         }
       ]
@@ -82,60 +128,106 @@
           "id": "desk",
           "label": "Examinar ordenador",
           "rect": [
-            0.03,
-            0.32,
-            0.4,
-            0.44
+            0.005,
+            0.36,
+            0.335,
+            0.42
           ],
           "target": "desk",
-          "priority": 3
+          "priority": 3,
+          "polygon": [
+            [
+              0.005,
+              0.4
+            ],
+            [
+              0.2,
+              0.4
+            ],
+            [
+              0.33,
+              0.45
+            ],
+            [
+              0.33,
+              0.75
+            ],
+            [
+              0.02,
+              0.78
+            ]
+          ]
         },
         {
           "id": "window",
           "label": "Asomarse a la ventana",
           "rect": [
-            0.27,
-            0.06,
-            0.2,
-            0.36
+            0.258,
+            0.13,
+            0.225,
+            0.34
           ],
           "target": "window",
-          "priority": 4
+          "priority": 4,
+          "polygon": [
+            [
+              0.268,
+              0.13
+            ],
+            [
+              0.455,
+              0.13
+            ],
+            [
+              0.46,
+              0.45
+            ],
+            [
+              0.274,
+              0.45
+            ]
+          ]
         },
         {
           "id": "door",
           "label": "Acercarse a la puerta abierta",
           "rect": [
-            0.78,
-            0.16,
-            0.2,
-            0.67
+            0.778,
+            0.13,
+            0.21,
+            0.74
           ],
           "target": "door_open",
-          "priority": 3
+          "priority": 3,
+          "polygon": [
+            [
+              0.78,
+              0.135
+            ],
+            [
+              0.985,
+              0.13
+            ],
+            [
+              0.985,
+              0.85
+            ],
+            [
+              0.78,
+              0.85
+            ]
+          ]
         },
         {
           "id": "turn",
           "label": "Girar hacia el otro lado",
           "rect": [
-            0.46,
-            0.69,
-            0.3,
-            0.27
+            0.4,
+            0.84,
+            0.28,
+            0.15
           ],
           "target": "back_wall",
-          "priority": 0
-        },
-        {
-          "id": "bed",
-          "label": "Acercarse a la cama",
-          "rect": [
-            0.63,
-            0.85,
-            0.17,
-            0.14
-          ],
-          "target": "bed",
           "priority": 0
         }
       ]
@@ -149,23 +241,41 @@
           "id": "screen",
           "label": "Mirar el escritorio del PC",
           "rect": [
-            0.23,
-            0.29,
-            0.33,
-            0.39
+            0.24,
+            0.3,
+            0.32,
+            0.34
           ],
           "action": {
             "message_key": "computer_placeholder"
-          }
+          },
+          "polygon": [
+            [
+              0.24,
+              0.3
+            ],
+            [
+              0.55,
+              0.31
+            ],
+            [
+              0.54,
+              0.63
+            ],
+            [
+              0.245,
+              0.64
+            ]
+          ]
         },
         {
           "id": "window",
           "label": "Mirar por la ventana",
           "rect": [
             0.63,
-            0.05,
-            0.34,
-            0.5
+            0.04,
+            0.36,
+            0.48
           ],
           "target": "window",
           "priority": 0
@@ -174,10 +284,10 @@
           "id": "back",
           "label": "Retroceder",
           "rect": [
-            0.08,
-            0.73,
-            0.84,
-            0.25
+            0.26,
+            0.875,
+            0.5,
+            0.12
           ],
           "target": "@overview",
           "priority": 0
@@ -193,23 +303,41 @@
           "id": "outside",
           "label": "Observar el bosque",
           "rect": [
-            0.25,
-            0.06,
-            0.63,
-            0.75
+            0.265,
+            0.035,
+            0.55,
+            0.73
           ],
           "action": {
             "message_key": "forest_placeholder"
-          }
+          },
+          "polygon": [
+            [
+              0.29,
+              0.05
+            ],
+            [
+              0.81,
+              0.035
+            ],
+            [
+              0.81,
+              0.75
+            ],
+            [
+              0.275,
+              0.75
+            ]
+          ]
         },
         {
           "id": "desk",
           "label": "Volver al ordenador",
           "rect": [
-            0.01,
-            0.46,
-            0.2,
-            0.43
+            0,
+            0.42,
+            0.18,
+            0.52
           ],
           "target": "desk",
           "priority": 0
@@ -218,10 +346,10 @@
           "id": "back",
           "label": "Retroceder",
           "rect": [
-            0.19,
-            0.84,
-            0.69,
-            0.15
+            0.3,
+            0.86,
+            0.39,
+            0.13
           ],
           "target": "@overview",
           "priority": 0
@@ -237,10 +365,10 @@
           "id": "bed",
           "label": "Acercarse a la cama",
           "rect": [
-            0.02,
-            0.5,
-            0.32,
-            0.4
+            0.005,
+            0.53,
+            0.255,
+            0.3
           ],
           "target": "bed",
           "priority": 3
@@ -249,10 +377,10 @@
           "id": "window",
           "label": "Observar ventana lateral",
           "rect": [
-            0.04,
-            0.04,
-            0.31,
-            0.43
+            0.09,
+            0.085,
+            0.29,
+            0.4
           ],
           "target": "window",
           "priority": 2
@@ -261,10 +389,10 @@
           "id": "desk",
           "label": "Mirar el escritorio",
           "rect": [
-            0.77,
-            0.33,
-            0.22,
-            0.6
+            0.835,
+            0.35,
+            0.16,
+            0.48
           ],
           "target": "desk",
           "priority": 1
@@ -273,10 +401,10 @@
           "id": "back",
           "label": "Volver a la vista general",
           "rect": [
-            0.36,
-            0.74,
-            0.4,
-            0.24
+            0.39,
+            0.88,
+            0.27,
+            0.11
           ],
           "target": "@overview",
           "priority": 0
@@ -292,10 +420,10 @@
           "id": "window",
           "label": "Acercarse a la ventana",
           "rect": [
-            0.73,
-            0.01,
-            0.26,
-            0.42
+            0.67,
+            0.03,
+            0.32,
+            0.43
           ],
           "target": "window",
           "priority": 2
@@ -304,23 +432,41 @@
           "id": "bedspread",
           "label": "Inspeccionar la cama",
           "rect": [
-            0.35,
-            0.4,
-            0.53,
-            0.31
+            0.33,
+            0.43,
+            0.6,
+            0.34
           ],
           "action": {
             "message_key": "bed_placeholder"
-          }
+          },
+          "polygon": [
+            [
+              0.4,
+              0.43
+            ],
+            [
+              0.93,
+              0.46
+            ],
+            [
+              0.91,
+              0.71
+            ],
+            [
+              0.34,
+              0.76
+            ]
+          ]
         },
         {
           "id": "door",
           "label": "Ir hacia la puerta",
           "rect": [
-            0.2,
-            0.09,
-            0.23,
-            0.6
+            0.15,
+            0.11,
+            0.31,
+            0.65
           ],
           "target": "@interior_door",
           "priority": 1
@@ -329,10 +475,10 @@
           "id": "back",
           "label": "Retroceder",
           "rect": [
-            0.23,
-            0.8,
-            0.66,
-            0.18
+            0.31,
+            0.87,
+            0.38,
+            0.11
           ],
           "target": "back_wall",
           "priority": 0
@@ -348,9 +494,9 @@
           "id": "open",
           "label": "Abrir la puerta",
           "rect": [
-            0.29,
-            0.08,
-            0.44,
+            0.36,
+            0.13,
+            0.35,
             0.72
           ],
           "action": {
@@ -364,10 +510,10 @@
           "id": "back",
           "label": "Retroceder",
           "rect": [
-            0.09,
-            0.82,
-            0.82,
-            0.16
+            0.25,
+            0.9,
+            0.5,
+            0.09
           ],
           "target": "@overview",
           "priority": 0
@@ -384,9 +530,9 @@
           "label": "Salir al porche",
           "rect": [
             0.31,
-            0.12,
-            0.36,
-            0.67
+            0.19,
+            0.35,
+            0.65
           ],
           "target": "porch_open",
           "priority": 2
@@ -396,9 +542,9 @@
           "label": "Cerrar la puerta",
           "rect": [
             0.75,
-            0.18,
+            0.12,
             0.24,
-            0.6
+            0.75
           ],
           "action": {
             "next_screen": "door_closed",
@@ -411,10 +557,10 @@
           "id": "back",
           "label": "Retroceder",
           "rect": [
-            0.04,
-            0.81,
-            0.68,
-            0.18
+            0.2,
+            0.9,
+            0.5,
+            0.09
           ],
           "target": "@overview",
           "priority": 0
@@ -446,10 +592,10 @@
           "id": "forest",
           "label": "Mirar el bosque",
           "rect": [
-            0.01,
-            0.11,
-            0.23,
-            0.65
+            0.005,
+            0.18,
+            0.16,
+            0.54
           ],
           "action": {
             "message_key": "forest_placeholder"
@@ -494,10 +640,10 @@
           "id": "forest",
           "label": "Mirar el bosque",
           "rect": [
-            0.01,
-            0.12,
-            0.25,
-            0.6
+            0.005,
+            0.18,
+            0.16,
+            0.54
           ],
           "action": {
             "message_key": "forest_placeholder"
