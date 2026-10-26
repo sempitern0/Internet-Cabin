@@ -24,7 +24,9 @@ var _paused := false
 var _show_guides := false
 var _shader_name := "YUV sutil"
 var _intensity := 0.55
+var _shader_name := "YUV sutil"
 var _audio_events: Dictionary = {}
+var _last_page: StringName
 var _arrows: Control
 var _pause_panel: PanelContainer
 var _hint: Label
@@ -166,8 +168,6 @@ func _on_page_changed(id: StringName) -> void:
 	_play_event("page:" + str(id))
 	_update_arrows()
 
-var _last_page: StringName
-
 
 func _on_background(pos: Vector2) -> void:
 	if _paused or not page_data.has(session.current_page):
@@ -208,7 +208,7 @@ func _make_hud() -> void:
 		button.pressed.connect(_navigate_side.bind(side))
 		button.set_anchors_and_offsets_preset(Control.PRESET_CENTER_LEFT if side == "left"
 			else Control.PRESET_CENTER_RIGHT if side == "right" else Control.PRESET_CENTER_BOTTOM)
-		button.position += Vector2(12, 0) if side == "left" else Vector2(-77, 0)
+		button.position += (Vector2(12, 0) if side == "left" else Vector2(-77, 0))
 	_arrows.hide()
 	_hint = Label.new()
 	_hint.mouse_filter = Control.MOUSE_FILTER_IGNORE
