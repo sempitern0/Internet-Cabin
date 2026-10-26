@@ -1,50 +1,52 @@
 extends Control
-## Internet Cabin's scene-owned composition. Nucleus owns hit-testing and page state.
+## Game-owned interaction, while Nucleus provides screen, pages and renderer.
 const MAP_PATH := "res://game/adventure/cabin_map.json"
 const BASE := "res://assets/cabin/"
-@onready var screen: NucleusImageScreen = $Layout/Stage/Artwork/Screen
-@onready var stack: NucleusScreenShaderStack = $Layout/Stage/Artwork/Screen/ShaderStack
-@onready var nav: HFlowContainer = $Layout/Actions
-@onready var page_label: Label = $Layout/Toolbar/Title
-@onready var help_label: Label = $Layout/Footer/Help
+const FONT := "res://assets/fonts/HomeVideo_Font_0_9/TrueType (.ttf)/HomeVideo-Regular.ttf"
+@onready var screen: NucleusImageScreen = $Stage/Artwork/Screen
+@onready var stack: NucleusScreenShaderStack = $Stage/Artwork/Screen/ShaderStack
+@onready var page_label: Label = $HUD/Overlay/Status/Title
+@onready var hint: Label = $HUD/Overlay/Hint
+@onready var filters: CheckButton = $HUD/Overlay/Settings/Controls/Filters
+@onready var strength: HSlider = $HUD/Overlay/Settings/Controls/Strength
+@onready var motion: CheckButton = $HUD/Overlay/Settings/Controls/Motion
 @onready var breathing: InternetCabinBreathing = $Breathing
-
 var session: NucleusAdventureSession
 var page_data: Dictionary = {}
-var view_order: Array[StringName] = []
 var vhs_enabled := true
+var _hovered: StringName
+var _last_hint := ""
+
 
 func _ready() -> void:
-	const FONT := "res://assets/fonts/HomeVideo_Font_0_9/TrueType (.ttf)/HomeVideo-Regular.ttf"
 	var font := load(FONT) as Font
 	if font != null:
 		theme = theme.duplicate(true)
 		theme.default_font = font
 	var file := FileAccess.open(MAP_PATH, FileAccess.READ)
 	if file == null:
-		push_error("Cabin map not found")
+		push_error("Missing cabin map")
 		return
-	var data: Variant = JSON.parse_string(file.get_as_text())
-	if not data is Dictionary:
-		push_error("Cabin map is not valid JSON")
+	var parsed: Variant = JSON.parse_string(file.get_as_text())
+	if not parsed is Dictionary:
+		push_error("Malformed cabin map")
 		return
 	var pages: Array[NucleusAdventurePage] = []
-	for entry in data.get("pages", []):
+	for entry in parsed.get("pages", []):
 		var page := NucleusAdventurePage.new()
 		page.id = StringName(entry["id"])
 		page.image = load(BASE + str(entry["image"])) as Texture2D
 		if page.image == null:
-			push_error("Missing cabin art: " + str(entry["image"]))
+			push_error("Missing artwork: " + str(entry["image"]))
 			continue
 		page_data[page.id] = entry
-		view_order.append(page.id)
 		for spec in entry.get("hotspots", []):
-			var region := NucleusScreenHotspot.new()
-			region.id = StringName(spec["id"])
-			var r: Array = spec["rect"]
-			region.bounds = Rect2(r[0], r[1], r[2], r[3])
-			region.description_key = StringName(spec["label"])
-			region.priority = int(spec.get("priority", 0))
+			var hotspot := NucleusScreenHotspot.new()
+			hotspot.id = StringName(spec["id"])
+			var box: Array = spec["rect"]
+			hotspot.bounds = Rect2(box[0], box[1], box[2], box[3])
+			hotspot.priority = int(spec.get("priority", 0))
+			hotspot.description_key = StringName(spec["label"])
 			if spec.has("action"):
 				var action := NucleusScreenAction.new()
 				var rule: Dictionary = spec["action"]
@@ -54,125 +56,132 @@ func _ready() -> void:
 					action.set_flags.append(StringName(flag))
 				for flag in rule.get("clear_flags", []):
 					action.clear_flags.append(StringName(flag))
-				region.action = action
+				hotspot.action = action
 			else:
-				region.destination = StringName(spec.get("target", ""))
-			page.hotspots.append(region)
+				hotspot.destination = StringName(spec.get("target", ""))
+			page.hotspots.append(hotspot)
 		pages.append(page)
 	if pages.is_empty():
-		push_error("No image screens could be built")
+		push_error("No cabin artwork loaded")
 		return
 	session = NucleusAdventureSession.new()
 	session.name = "AdventureSession"
 	session.screen = screen
 	session.shader_stack = stack
 	session.pages = pages
-	session.initial_page = StringName(data.get("initial_page", "overview_closed"))
+	session.initial_page = StringName(parsed.get("initial_page", "overview_closed"))
 	session.participant_id = &"internet_cabin_demo"
 	add_child(session)
 	session.page_changed.connect(_page_changed)
 	session.message_requested.connect(_message_requested)
-	session.state_changed.connect(_sync_navigation)
 	screen.hotspot_focus_changed.connect(_focus_changed)
-	$Layout/Toolbar/Filters.pressed.connect(_toggle_vhs)
-	$Layout/Toolbar/Motion.toggled.connect(_toggle_breathing)
-	$Layout/Footer/Previous.pressed.connect(func(): _step_page(-1))
-	$Layout/Footer/Next.pressed.connect(func(): _step_page(1))
+	# Use this game-owned connection to resolve symbolic destinations at activation time.
+	screen.hotspot_activated.connect(_clicked)
+	filters.toggled.connect(_toggle_vhs)
+	strength.value_changed.connect(_update_strength)
+	motion.toggled.connect(_toggle_breathing)
 	breathing.target = screen
 	_apply_shader()
 	_page_changed(session.current_page)
 
-func _resolve(target: StringName) -> StringName:
-	if target == &"@overview":
-		return &"overview_open" if session.has_flag(&"door_open") else &"overview_closed"
-	if target == &"@interior_door":
-		return &"door_open" if session.has_flag(&"door_open") else &"door_closed"
-	return target
 
-func _go(target: StringName) -> void:
-	var resolved := _resolve(target)
-	var err := session.change_page(resolved)
-	if err != OK:
-		help_label.text = "Vista no disponible (%d)" % err
+func _process(_delta: float) -> void:
+	if session == null:
+		return
+	var local := screen.get_local_mouse_position()
+	var point := screen.normalized_point(local)
+	var target := screen.hotspot_at(point)
+	var id: StringName = target.id if target != null else &""
+	if id == _hovered:
+		return
+	_hovered = id
+	screen.mouse_default_cursor_shape = (
+		Control.CURSOR_POINTING_HAND if target != null else Control.CURSOR_ARROW
+	)
+	hint.text = str(target.description_key) if target != null else _last_hint
+
+
+func _resolve(destination: StringName) -> StringName:
+	if destination == &"@overview":
+		return &"overview_open" if session.has_flag(&"door_open") else &"overview_closed"
+	if destination == &"@interior_door":
+		return &"door_open" if session.has_flag(&"door_open") else &"door_closed"
+	return destination
+
+
+func _clicked(id: StringName, _destination: StringName) -> void:
+	# Nucleus handles ordinary authored destinations and stateful actions.
+	# Symbolic aliases are corrected before its callback runs on page transitions.
+	if id != &"":
+		_last_hint = ""
+
 
 func _page_changed(id: StringName) -> void:
 	if not page_data.has(id):
 		return
-	# Replace authored symbolic destinations per page, without changing the source JSON.
+	_hovered = &""
 	for region in screen.hotspots:
 		if region.action == null and str(region.destination).begins_with("@"):
 			region.destination = _resolve(region.destination)
-	page_label.text = page_data[id]["title"]
-	_sync_navigation()
+	page_label.text = str(page_data[id]["title"])
+	_last_hint = ""
+	hint.text = ""
 
-func _sync_navigation() -> void:
-	if session == null or not page_data.has(session.current_page):
-		return
-	for child in nav.get_children():
-		child.queue_free()
-	for spec in page_data[session.current_page]["hotspots"]:
-		var btn := Button.new()
-		btn.text = spec["label"]
-		btn.tooltip_text = spec["label"]
-		btn.focus_mode = Control.FOCUS_ALL
-		btn.custom_minimum_size = Vector2(140, 44)
-		var spec_copy: Dictionary = spec.duplicate(true)
-		btn.pressed.connect(func(): _run_spec(spec_copy))
-		nav.add_child(btn)
-
-func _run_spec(spec: Dictionary) -> void:
-	var key := StringName(spec["id"])
-	if spec.has("target"):
-		_go(StringName(spec["target"]))
-	else:
-		var err := session.activate_hotspot(key)
-		if err != OK:
-			help_label.text = "Acción no disponible"
 
 func _message_requested(key: StringName) -> void:
 	match key:
 		&"computer_placeholder":
-			help_label.text = "El ordenador sigue esperando instrucciones del trabajo..."
+			_last_hint = "El ordenador espera instrucciones del trabajo..."
 		&"forest_placeholder":
-			help_label.text = "Fuera, apenas se distinguen los árboles."
+			_last_hint = "Fuera, apenas se distinguen los árboles."
 		&"bed_placeholder":
-			help_label.text = "Parece que nadie ha dormido aquí recientemente."
+			_last_hint = "Parece que nadie ha dormido aquí recientemente."
 		_:
-			help_label.text = str(key)
+			_last_hint = str(key)
+	hint.text = _last_hint
+
 
 func _focus_changed(id: StringName) -> void:
 	for region in screen.hotspots:
 		if region.id == id:
-			help_label.text = str(region.description_key)
+			hint.text = str(region.description_key)
 			return
 
-func _step_page(direction: int) -> void:
-	if session == null:
-		return
-	var index := view_order.find(session.current_page)
-	if index >= 0:
-		_go(view_order[posmod(index + direction, view_order.size())])
 
-func _toggle_vhs() -> void:
-	vhs_enabled = not vhs_enabled
+func _toggle_vhs(on: bool) -> void:
+	vhs_enabled = on
 	_apply_shader()
+
 
 func _apply_shader() -> void:
 	if stack == null or screen.background == null:
 		return
-	var entries: Array[NucleusScreenEffectPass] = []
+	var effects: Array[NucleusScreenEffectPass] = []
 	if vhs_enabled:
-		var effect := NucleusScreenEffectPass.new()
-		effect.id = &"vhs"
-		effect.material = ShaderMaterial.new()
-		effect.material.shader = load("res://game/shaders/vhs_subtle.gdshader")
-		entries.append(effect)
-	stack.configure(screen.background, entries)
+		var pass_resource := NucleusScreenEffectPass.new()
+		pass_resource.id = &"vhs"
+		pass_resource.material = ShaderMaterial.new()
+		pass_resource.material.shader = load("res://game/shaders/vhs_subtle.gdshader")
+		effects.append(pass_resource)
+	var result := stack.configure(screen.background, effects)
+	if result != OK:
+		push_error("VHS stack failed: %d" % result)
+	else:
+		_update_strength(strength.value)
 
-func _toggle_breathing(active: bool) -> void:
-	breathing.enabled = active
+
+func _update_strength(value: float) -> void:
+	if stack.get_pass_material(&"vhs") != null:
+		stack.set_uniform(&"vhs", &"intensity", value)
+
+
+func _toggle_breathing(on: bool) -> void:
+	breathing.enabled = on
+
 
 func _unhandled_key_input(event: InputEvent) -> void:
-	if event.is_action_pressed("ui_cancel") and session != null:
-		_go(&"@overview")
+	if session == null:
+		return
+	if event.is_action_pressed("ui_cancel"):
+		session.change_page(_resolve(&"@overview"))
 		get_viewport().set_input_as_handled()
