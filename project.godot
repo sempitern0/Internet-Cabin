@@ -53,7 +53,7 @@ folder_colors={
 
 [gui]
 
-theme/custom="res://game/ui/internet_cabin_theme.tres"
+theme/custom="res://components/ui/theme/nucleus_base_theme.tres"
 
 [input]
 
