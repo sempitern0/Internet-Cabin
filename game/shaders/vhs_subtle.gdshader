@@ -1,30 +1,63 @@
 shader_type canvas_item;
-// Restrained analog video degradation applied only to the cabin image.
-// Designed for Nucleus BACKBUFFER: the screen was drawn before this overlay.
-uniform sampler2D screen_texture : hint_screen_texture, filter_linear;
-uniform float intensity : hint_range(0.0, 1.0) = 0.45;
-uniform float tracking : hint_range(0.0, 1.0) = 0.18;
-uniform float time_speed : hint_range(0.0, 3.0) = 1.0;
 
-float noise21(vec2 p) {
-	return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453);
+// VHS Scanline Color Fuzz: original YUV/luma/chroma processing provided by the
+// project author, with an additional, reversible game-side wet/dry control.
+// Usage: a Nucleus BACKBUFFER overlay with hint_screen_texture sampling.
+uniform sampler2D screen_texture : hint_screen_texture, repeat_disable, filter_nearest_mipmap;
+
+group_uniforms scanline_wiggle;
+uniform float color_offset_multiplier : hint_range(0.0, 0.1) = 0.004;
+uniform float black_offset_multiplier : hint_range(0.0, 0.1) = 0.1;
+uniform float color_offset : hint_range(-0.1, 0.1) = 0.005;
+
+group_uniforms blur;
+uniform float blur_amount : hint_range(0.0, 3.0, 0.1) = 0.5;
+
+// Preserved from the supplied shader for later LUT support; currently unused.
+uniform sampler2D colorLookup;
+
+group_uniforms presentation;
+uniform float effect_strength : hint_range(0.0, 1.0) = 0.55;
+
+float noise(vec2 uv, float offset) {
+    return (fract(sin(dot(uv * offset, vec2(12.9898, 78.233))) * 43758.5453) - 0.5) * 2.0;
+}
+
+vec3 rgb_to_yuv(vec3 rgb) {
+    const mat3 RGB_TO_YUV = mat3(
+        vec3(0.299, 0.587, 0.114),
+        vec3(-0.14713, -0.28886, 0.436),
+        vec3(.615, -0.51499, -0.10001)
+    );
+    return rgb * RGB_TO_YUV;
+}
+
+vec3 yuv_to_rgb(vec3 yuv) {
+    const mat3 YUV_TO_RGB = mat3(
+        vec3(1.0, 0.0, 1.13983),
+        vec3(1.0, -0.39465, -0.58060),
+        vec3(1.0, 2.03211, 0.0)
+    );
+    return clamp(yuv * YUV_TO_RGB, vec3(0.0), vec3(1.0));
 }
 
 void fragment() {
-	float t = TIME * time_speed;
-	vec2 uv = SCREEN_UV;
-	float tear = step(0.993, noise21(vec2(floor(t * 1.2), floor(uv.y * 9.0))));
-	uv.x += sin(uv.y * 180.0 + t * 0.75) * tracking * intensity * 0.0014;
-	uv.x += tear * tracking * intensity * 0.0018;
-	vec2 separation = vec2(0.0008 * intensity, 0.0);
-	float r = texture(screen_texture, uv + separation).r;
-	float g = texture(screen_texture, uv).g;
-	float b = texture(screen_texture, uv - separation).b;
-	vec3 color = vec3(r, g, b);
-	float scan = 0.5 + 0.5 * sin(FRAGCOORD.y * 1.6);
-	color *= 1.0 - scan * (0.045 * intensity);
-	float grain = noise21(floor(FRAGCOORD.xy * 0.8) + floor(t * 19.0));
-	float shadows = 1.0 - dot(color, vec3(0.2126, 0.7152, 0.0722));
-	color += (grain - 0.5) * shadows * intensity * 0.12;
-	COLOR = vec4(clamp(color, 0.0, 1.0), 1.0);
+    float x_offset = color_offset + noise(
+        vec2(floor(UV.y * 487.0), fract(UV.y * 487.0)), TIME
+    ) * color_offset_multiplier;
+    float black_offset = noise(
+        vec2(floor(UV.y * 487.0), fract(UV.y * 487.0)), TIME + 69.420
+    ) * (black_offset_multiplier * 0.01);
+
+    vec4 original = textureLod(screen_texture, SCREEN_UV, 0.0);
+    COLOR = textureLod(screen_texture, SCREEN_UV + vec2(black_offset, 0.0), 0.0);
+    vec4 color2 = textureLod(
+        screen_texture, SCREEN_UV + vec2(x_offset, 0.0), blur_amount
+    );
+    vec3 yuv1 = rgb_to_yuv(COLOR.rgb);
+    vec3 yuv2 = rgb_to_yuv(color2.rgb);
+
+    COLOR.rgb = yuv_to_rgb(vec3(yuv1.x, yuv2.yz));
+    COLOR.rgb = mix(original.rgb, COLOR.rgb, effect_strength);
+    COLOR.a = original.a;
 }
