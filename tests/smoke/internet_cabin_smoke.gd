@@ -48,6 +48,26 @@ func _run_smoke() -> void:
 		push_error("Empty floor should not activate a nonexistent bed")
 		get_tree().quit(1)
 		return
+	if instance._shader_name != "Fathom":
+		push_error("Fathom must be the default adventure shader")
+		get_tree().quit(1)
+		return
+	for detail_page in [&"bed_close", &"bed_windows", &"entry_picture",
+		&"desktop_tower", &"computer_screen", &"cabin_shelf",
+		&"cabin_clothes", &"cabin_boots"]:
+		if session.change_page(detail_page) != OK:
+			push_error("Cabin closeup not accessible: " + str(detail_page))
+			get_tree().quit(1)
+			return
+		var back_id: StringName = instance._fallback_back()
+		if session.change_page(back_id) != OK:
+			push_error("Cabin closeup cannot return: " + str(detail_page))
+			get_tree().quit(1)
+			return
+	if session.change_page(&"overview_closed") != OK:
+		push_error("Overview unavailable after closeups")
+		get_tree().quit(1)
+		return
 	if instance._arrows.visible:
 		push_error("Navigation guides must start hidden")
 		get_tree().quit(1)
