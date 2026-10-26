@@ -111,6 +111,16 @@ func _ready() -> void:
 
 
 func _input(event: InputEvent) -> void:
+	if not _paused and event is InputEventMouseButton:
+		var click := event as InputEventMouseButton
+		if click.pressed and click.button_index == MOUSE_BUTTON_LEFT and session != null:
+			var local := screen.get_global_transform_with_canvas().affine_inverse()
+			var point := screen.normalized_point(local * click.position)
+			if point.x >= 0.0 and point.x <= 1.0 and point.y >= 0.0 and point.y <= 1.0:
+				if point.y >= 0.93 or point.x <= 0.065 or point.x >= 0.935:
+					_navigate_edge(point)
+					get_viewport().set_input_as_handled()
+					return
 	if event is InputEventKey and event.pressed and not event.echo:
 		if event.keycode == KEY_ESCAPE:
 			set_paused(not _paused)
