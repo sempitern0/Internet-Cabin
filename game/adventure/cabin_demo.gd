@@ -4,7 +4,7 @@ const MAP_PATH := "res://game/adventure/cabin_map.json"
 const BASE := "res://assets/cabin/"
 @onready var screen: NucleusImageScreen = $Layout/Stage/Artwork/Screen
 @onready var stack: NucleusScreenShaderStack = $Layout/Stage/Artwork/Screen/ShaderStack
-@onready var nav: HBoxContainer = $Layout/Toolbar/Actions
+@onready var nav: HFlowContainer = $Layout/Actions
 @onready var page_label: Label = $Layout/Toolbar/Title
 @onready var help_label: Label = $Layout/Footer/Help
 @onready var breathing: InternetCabinBreathing = $Breathing
@@ -111,7 +111,7 @@ func _sync_navigation() -> void:
 		btn.tooltip_text = spec["label"]
 		btn.focus_mode = Control.FOCUS_ALL
 		btn.custom_minimum_size = Vector2(140, 44)
-		var spec_copy: Dictionary = spec
+		var spec_copy: Dictionary = spec.duplicate(true)
 		btn.pressed.connect(func(): _run_spec(spec_copy))
 		nav.add_child(btn)
 
