@@ -44,18 +44,17 @@ layout_mode = 2
 button_pressed = true
 text = "Respiración"
 
-[node name="Stage" type="CenterContainer" parent="Layout"]
+[node name="Stage" type="AspectRatioContainer" parent="Layout"]
 layout_mode = 2
-size_flags_vertical = 3
-mouse_filter = 1
-
-[node name="Artwork" type="AspectRatioContainer" parent="Layout/Stage"]
-layout_mode = 2
-custom_minimum_size = Vector2(320, 240)
-size_flags_horizontal = 3
 size_flags_vertical = 3
 ratio = 1.333333
-stretch_mode = 3
+stretch_mode = 0
+mouse_filter = 1
+
+[node name="Artwork" type="Control" parent="Layout/Stage"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
 mouse_filter = 1
 
 [node name="Screen" type="Control" parent="Layout/Stage/Artwork"]
