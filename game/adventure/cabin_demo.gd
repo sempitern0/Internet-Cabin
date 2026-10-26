@@ -15,6 +15,10 @@ var view_order: Array[StringName] = []
 var vhs_enabled := true
 
 func _ready() -> void:
+	var font := load("res://assets/fonts/HomeVideo_Font_0_9/TrueType (.ttf)/HomeVideo-Regular.ttf") as Font
+	if font != null:
+		theme = theme.duplicate(true)
+		theme.default_font = font
 	var file := FileAccess.open(MAP_PATH, FileAccess.READ)
 	if file == null:
 		push_error("Cabin map not found")
