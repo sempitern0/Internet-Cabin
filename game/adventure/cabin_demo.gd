@@ -347,5 +347,7 @@ func _play_event(event_id: String) -> void:
 	if str(entry.get("type", "sfx")) == "music":
 		NucleusAudio.music.play(audio, float(entry.get("fade", 0.6)))
 	else:
-		var bus := NucleusAudioBuses.AMBIENT if str(entry.get("type")) == "ambient" else NucleusAudioBuses.SFX
+		var bus := NucleusAudioBuses.SFX
+		if str(entry.get("type")) == "ambient":
+			bus = NucleusAudioBuses.AMBIENT
 		NucleusAudio.play_one_shot(audio, bus)
