@@ -62,7 +62,7 @@ func _run_smoke() -> void:
 		push_error("Resume did not restore interactions")
 		get_tree().quit(1)
 		return
-	if not instance.page_data[&"desk"].has("navigation"):
+	if not instance.page_data[&"desk"].has("edge_left") or not instance.page_data[&"desk"].has("edge_right"):
 		push_error("Desk is missing explicit navigation")
 		get_tree().quit(1)
 		return
