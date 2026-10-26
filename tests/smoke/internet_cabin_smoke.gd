@@ -68,6 +68,42 @@ func _run_smoke() -> void:
 		push_error("Overview unavailable after closeups")
 		get_tree().quit(1)
 		return
+	# Exercise the same image-coordinate route as real mouse clicks.
+	session.change_page(&"desk")
+	instance._route_click(Vector2(0.36, 0.45))
+	if session.current_page != &"computer_screen":
+		push_error("Clicking CRT did not open computer desktop")
+		get_tree().quit(1)
+		return
+	instance._route_click(Vector2(0.50, 0.975))
+	if session.current_page != &"desk":
+		push_error("Bottom edge did not return from computer desktop")
+		get_tree().quit(1)
+		return
+	session.change_page(&"door_closed")
+	instance._route_click(Vector2(0.26, 0.20))
+	if session.current_page != &"entry_picture":
+		push_error("Clicking doorway painting did not open detail")
+		get_tree().quit(1)
+		return
+	instance._route_click(Vector2(0.50, 0.975))
+	if session.current_page != &"door_closed":
+		push_error("Painting closeup did not return to doorway")
+		get_tree().quit(1)
+		return
+	session.change_page(&"back_wall")
+	instance._route_click(Vector2(0.10, 0.65))
+	if session.current_page != &"bed":
+		push_error("Clicking bed from opposite wall failed")
+		get_tree().quit(1)
+		return
+	session.change_page(&"window")
+	instance._route_click(Vector2(0.50, 0.975))
+	if session.current_page != &"desk":
+		push_error("Window back route failed")
+		get_tree().quit(1)
+		return
+	session.change_page(&"overview_closed")
 	if instance._arrows.visible:
 		push_error("Navigation guides must start hidden")
 		get_tree().quit(1)
