@@ -143,7 +143,7 @@ func navigate(target: StringName) -> Error:
 	if _paused or session == null:
 		return ERR_BUSY
 	if target == &"@previous" and not history.is_empty():
-		var prior := history.pop_back()
+		var prior: StringName = history.pop_back()
 		_suppress_history = true
 		var result := session.change_page(prior)
 		_suppress_history = false
