@@ -99,6 +99,7 @@ func _ready() -> void:
 	session.page_changed.connect(_on_page_changed)
 	session.message_requested.connect(_on_message)
 	screen.background_activated.connect(_on_background)
+	screen.hotspot_activated.connect(_on_interaction)
 	_make_hud()
 	breathing.target = screen
 	_on_page_changed(session.current_page)
@@ -179,6 +180,10 @@ func _on_background(pos: Vector2) -> void:
 		navigate(StringName(entry.get("edge_left", "@previous")))
 	elif pos.x >= 0.91:
 		navigate(StringName(entry.get("edge_right", "@previous")))
+
+
+func _on_interaction(id: StringName, _destination: StringName) -> void:
+	_play_event("interaction:" + str(id))
 
 
 func _on_message(key: StringName) -> void:
@@ -342,4 +347,5 @@ func _play_event(event_id: String) -> void:
 	if str(entry.get("type", "sfx")) == "music":
 		NucleusAudio.music.play(audio, float(entry.get("fade", 0.6)))
 	else:
-		NucleusAudio.play_one_shot(audio, NucleusAudioBuses.SFX)
+		var bus := NucleusAudioBuses.AMBIENT if str(entry.get("type")) == "ambient" else NucleusAudioBuses.SFX
+		NucleusAudio.play_one_shot(audio, bus)
