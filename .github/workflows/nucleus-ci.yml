@@ -73,6 +73,12 @@ jobs:
           python3 scripts/ci/run_godot_checked.py "${{ steps.godot.outputs.bin }}" \
             --headless --path . res://tests/smoke/localization_smoke.tscn
 
+      - name: Run Internet Cabin navigation smoke
+        run: |
+          python3 scripts/ci/check_cabin_images.py
+          python3 scripts/ci/run_godot_checked.py "${{ steps.godot.outputs.bin }}" \
+            --headless --path . res://tests/smoke/internet_cabin_smoke.tscn
+
       - name: Run native headless test scene
         run: |
           python3 scripts/ci/run_godot_checked.py "${{ steps.godot.outputs.bin }}" \
