@@ -55,3 +55,11 @@ Las imágenes de los estados tienen detalles generados en distintos pases y debe
 - Desactivar la respiración mientras la cámara está ampliada: debe volver a escala 1 de forma gradual.
 - Mover el ratón sobre escritorio, puerta, ventana y fondo vacío: mano en hotspots y flecha fuera.
 - Mantener el texto contextual legible sobre diferentes exposiciones; no se debe convertir en barra de botones.
+
+## Calibración VHS YUV y respiración (iteración actual)
+
+El shader `game/shaders/vhs_subtle.gdshader` utiliza el algoritmo suministrado de desplazamiento de luminancia/crominancia, funciones `noise`, `rgb_to_yuv` y `yuv_to_rgb`, y `textureLod` para el desenfoque de color. Solo se añade `effect_strength` para mezclar imagen original y resultado sin romper la fórmula. La UI de intensidad controla **effect_strength**, no un uniforme inexistente llamado `intensity`.
+
+Valores de partida: `effect_strength=0.55`, `color_offset_multiplier=0.004`, `black_offset_multiplier=0.1`, `color_offset=0.005`, `blur_amount=0.5`. Se conservan en `vhs_settings` entre cambios de pantalla. `colorLookup` permanece declarado como en la fuente, pero aún no realiza una LUT.
+
+Respiración: escala base 1.014, amplitud ±0.006, frecuencia 0.115 Hz e interpolación exponencial de respuesta 4.5. El movimiento se aplica al mismo Control que resuelve hotspots, preservando la alineación. Verificar el margen de recorte en 4:3/16:9 y reducir amplitud si provoca incomodidad; permitir desactivarlo.
