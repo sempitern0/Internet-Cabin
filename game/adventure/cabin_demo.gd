@@ -1,6 +1,7 @@
 extends Control
 ## Scene-owned navigation, pause UI, shader auditions and audio cues.
 const CabinSessionScript = preload("res://game/adventure/cabin_session.gd")
+const SAVE_SLOT := "internet_cabin"
 const MAP_PATH := "res://game/adventure/cabin_map.json"
 const AUDIO_PATH := "res://game/adventure/cabin_audio_events.json"
 const BASE := "res://assets/cabin/"
@@ -29,6 +30,8 @@ var page_data: Dictionary = {}
 var history: Array[StringName] = []
 var _suppress_history := false
 var _paused := false
+var _restoring := false
+var _save_status: Label
 var _show_guides := false
 var _selected_item: StringName
 var _message_until := 0
@@ -91,6 +94,9 @@ func _ready() -> void:
 				action.next_screen = StringName(rule.get("next_screen", ""))
 				action.required_item = StringName(rule.get("required_item", ""))
 				action.consume_item = bool(rule.get("consume_item", false))
+				action.give_item = StringName(rule.get("give_item", ""))
+				for flag in rule.get("forbidden_flags", []):
+					action.forbidden_flags.append(StringName(flag))
 				action.one_shot = bool(rule.get("one_shot", false))
 				for flag in rule.get("required_flags", []):
 					action.required_flags.append(StringName(flag))
@@ -127,6 +133,7 @@ func _ready() -> void:
 	add_child(session)
 	session.page_changed.connect(_on_page_changed)
 	session.message_requested.connect(_on_message)
+	session.state_changed.connect(_refresh_world)
 	screen.background_activated.connect(_on_background)
 	# Native GUI dispatch gives HUD and modals priority over the world.
 	screen.gui_input.connect(_world_gui_input)
@@ -198,6 +205,11 @@ func _process(_delta: float) -> void:
 	_apply_game_cursor(hit != null)
 	if Time.get_ticks_msec() < _message_until:
 		return
+	if hit == null and screen.has_focus() and screen.focused_hotspot != &"":
+		for candidate in screen.hotspots:
+			if candidate.id == screen.focused_hotspot:
+				hit = candidate
+				break
 	var prompt := str(hit.description_key) if hit != null else ""
 	if _selected_item != &"":
 		var item_name := str(inventory.definitions[_selected_item]["name"])
@@ -240,7 +252,7 @@ func navigate(target: StringName) -> Error:
 func _on_page_changed(id: StringName) -> void:
 	if not page_data.has(id):
 		return
-	if not _suppress_history and not session.current_page == &"":
+	if not _restoring and not _suppress_history and not session.current_page == &"":
 		# Use previous emitted page rather than the current value after change.
 		if _last_page != &"" and _last_page != id:
 			history.append(_last_page)
@@ -251,7 +263,8 @@ func _on_page_changed(id: StringName) -> void:
 	_refresh_world()
 	_refresh_inventory()
 	_apply_shader()
-	_play_event("page:" + str(id))
+	if not _restoring:
+		_play_event("page:" + str(id))
 	_update_arrows()
 
 
@@ -276,7 +289,10 @@ func _refresh_world() -> void:
 	var authored: Array[NucleusScreenHotspot] = []
 	for page in session.pages:
 		if page.id == session.current_page:
-			authored = page.hotspots.duplicate()
+			for index in page.hotspots.size():
+				var spec: Dictionary = page_data[page.id]["hotspots"][index]
+				if _is_visible(spec):
+					authored.append(page.hotspots[index])
 			break
 	for id in inventory.items_on_page(session.current_page):
 		var values: Array = inventory.world[id]["rect"]
@@ -287,6 +303,8 @@ func _refresh_world() -> void:
 		region.description_key = StringName("Recoger " + str(inventory.definitions[id]["name"]))
 		authored.append(region)
 	for side in ["left", "right", "back"]:
+		if not _can_navigate_side(side):
+			continue
 		var region := NucleusScreenHotspot.new()
 		region.id = StringName("nav:" + side)
 		region.priority = 200 if side == "back" else -100
@@ -370,10 +388,13 @@ func _refresh_inventory() -> void:
 	for index in range(2):
 		var button := _slots.get_child(index) as Button
 		if index >= stacks.size():
+			button.modulate = Color.WHITE
+			button.disabled = true
 			button.icon = null
 			button.text = "·"
 			button.tooltip_text = "Bolsillo vacío"
 			continue
+		button.disabled = false
 		var definition: NucleusItemDefinition = stacks[index].definition
 		button.text = ""
 		button.modulate = Color(1, 0.75, 0.4) if definition.item_id == _selected_item else Color.WHITE
@@ -388,6 +409,8 @@ func _slot_pressed(index: int) -> void:
 
 
 func _inspect_item(id: StringName) -> void:
+	if _paused or not inventory.storage.has_item(id):
+		return
 	_inspected_item = id
 	var data: Dictionary = inventory.definitions[id]
 	_inspect_image.texture = load(str(data.get("examine", ""))) as Texture2D
@@ -397,6 +420,7 @@ func _inspect_item(id: StringName) -> void:
 	screen.interaction_enabled = false
 	_update_arrows()
 	_apply_game_cursor(false, true)
+	_inspect_panel.get_child(0).get_child(2).grab_focus()
 
 
 func _drop_inspected_item() -> void:
@@ -482,10 +506,14 @@ func _on_interaction(id: StringName, _destination: StringName) -> void:
 		if StringName(candidate["id"]) == id:
 			spec = candidate
 			break
+	if spec.is_empty() or not _is_visible(spec):
+		return
 	var rule: Dictionary = spec.get("action", {})
 	if bool(rule.get("one_shot", false)) and session.completed.has(
 		"%s/%s" % [session.current_page, id]):
-		_show_inventory_message("Ya has examinado esto. " + str(rule.get("message_key", "")))
+		_select_item(&"")
+		_show_inventory_message(str(spec.get("completed_hint",
+			"Ya has examinado esto. " + str(rule.get("message_key", "")))))
 		return
 	var required := StringName(rule.get("required_item", ""))
 	if required != &"" and _selected_item != required:
@@ -501,6 +529,10 @@ func _on_interaction(id: StringName, _destination: StringName) -> void:
 	else:
 		result = session.activate_hotspot(id)
 	if result == OK:
+		var reward := StringName(rule.get("give_item", ""))
+		if reward != &"" and inventory.storage.has_item(reward):
+			inventory.world[reward]["available"] = false
+			inventory.world_changed.emit()
 		_play_event("interaction:" + str(id))
 		_selected_item = &""
 		_refresh_inventory()
@@ -594,21 +626,53 @@ func _make_hud() -> void:
 	breathing_toggle.button_pressed = breathing.enabled
 	column.add_child(breathing_toggle)
 	breathing_toggle.toggled.connect(func(active: bool): breathing.enabled = active)
+	var save_button := Button.new()
+	save_button.text = "Guardar partida"
+	column.add_child(save_button)
+	save_button.pressed.connect(func(): save_progress())
+	var load_button := Button.new()
+	load_button.text = "Cargar partida"
+	column.add_child(load_button)
+	load_button.pressed.connect(func(): load_progress())
+	_save_status = Label.new()
+	_save_status.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	column.add_child(_save_status)
 	var resume := Button.new()
 	resume.text = "Continuar (Esc)"
 	column.add_child(resume)
 	resume.pressed.connect(func(): set_paused(false))
 	_pause_panel.hide()
+	overlay.move_child(_modal, -1)
+
+
+func _is_visible(spec: Dictionary) -> bool:
+	for flag in spec.get("visible_when", []):
+		if not session.has_flag(StringName(flag)):
+			return false
+	for flag in spec.get("hidden_when", []):
+		if session.has_flag(StringName(flag)):
+			return false
+	return true
+
+
+func _side_target(side: String) -> StringName:
+	var entry: Dictionary = page_data[session.current_page]
+	return _fallback_back() if side == "back" else _resolve(
+		StringName(entry.get("edge_" + side, _fallback_back())))
+
+
+func _can_navigate_side(side: String) -> bool:
+	if session == null or not page_data.has(session.current_page):
+		return false
+	var target := _side_target(side)
+	return page_data.has(target) and target != session.current_page
 
 
 func _navigate_side(side: String) -> void:
 	if _paused or _inspect_panel.visible or not page_data.has(session.current_page):
 		return
-	var entry: Dictionary = page_data[session.current_page]
-	if side == "back":
-		navigate(_fallback_back())
-	else:
-		navigate(StringName(entry.get("edge_" + side, _fallback_back())))
+	if _can_navigate_side(side):
+		navigate(_side_target(side))
 
 
 func _update_arrows() -> void:
@@ -617,7 +681,8 @@ func _update_arrows() -> void:
 	_arrows.visible = not _paused and not _inspect_panel.visible
 	_hint.visible = _arrows.visible
 	for button in _arrows.get_children():
-		button.visible = button.name == "back" or _show_guides
+		button.visible = (button.name == "back" or _show_guides) and _can_navigate_side(
+			str(button.name))
 
 
 func set_paused(value: bool) -> void:
@@ -628,10 +693,12 @@ func set_paused(value: bool) -> void:
 	_update_arrows()
 	get_tree().paused = value
 	if value:
+		_shader_select.grab_focus()
 		Input.set_custom_mouse_cursor(null, Input.CURSOR_ARROW)
 		Input.set_custom_mouse_cursor(null, Input.CURSOR_POINTING_HAND)
 		_cursor_active = false
 	else:
+		screen.grab_focus()
 		_apply_game_cursor(false, true)
 
 
@@ -713,3 +780,53 @@ func _exit_tree() -> void:
 	Input.set_custom_mouse_cursor(null, Input.CURSOR_POINTING_HAND)
 	if _paused:
 		get_tree().paused = false
+
+
+func capture_progress() -> Dictionary:
+	return {"version": 1, "adventure": session.capture_state(),
+		"items": inventory.capture_state()}
+
+
+func restore_progress(snapshot: Dictionary) -> Error:
+	if snapshot.get("version") != 1:
+		return ERR_FILE_UNRECOGNIZED
+	var adventure: Variant = snapshot.get("adventure")
+	var items: Variant = snapshot.get("items")
+	if not adventure is Dictionary or not items is Dictionary:
+		return ERR_INVALID_DATA
+	if not inventory.validate_state(items):
+		return ERR_INVALID_DATA
+	for location in items["world"].values():
+		if not page_data.has(StringName(location["page"])):
+			return ERR_DOES_NOT_EXIST
+	# Validate inventory first, then let Nucleus accept the adventure snapshot.
+	# A rejected adventure must not clear the current selection through inventory signals.
+	_restoring = true
+	var result := session.restore_state(adventure)
+	if result == OK:
+		inventory.restore_state(items)
+		history.clear()
+		_selected_item = &""
+		_inspected_item = &""
+		_close_inspection()
+		if _paused:
+			_shader_select.grab_focus()
+		_refresh_inventory()
+	_restoring = false
+	return result
+
+
+func save_progress(slot_id: String = SAVE_SLOT) -> Error:
+	var result := NucleusSave.save_manual(slot_id, capture_progress())
+	_save_status.text = "Partida guardada." if result.succeeded() else "No se pudo guardar."
+	return OK if result.succeeded() else ERR_CANT_CREATE
+
+
+func load_progress(slot_id: String = SAVE_SLOT) -> Error:
+	var result := NucleusSave.load_manual(slot_id)
+	if not result.succeeded():
+		_save_status.text = "No se pudo cargar una partida válida."
+		return ERR_CANT_OPEN
+	var restored := restore_progress(result.document.payload)
+	_save_status.text = "Partida cargada." if restored == OK else "Partida incompatible."
+	return restored

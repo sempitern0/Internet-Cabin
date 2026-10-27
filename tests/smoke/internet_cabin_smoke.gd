@@ -180,6 +180,7 @@ func _run_smoke() -> void:
 		get_tree().quit(1)
 		return
 	await _verify_interaction(instance)
+	await _verify_authoring_and_progress(instance)
 	if _failures > 0:
 		get_tree().quit(1)
 		return
@@ -199,10 +200,12 @@ func _check(condition: bool, message: String) -> void:
 func _mouse(viewport_point: Vector2, pressed: bool) -> void:
 	var motion := InputEventMouseMotion.new()
 	motion.position = viewport_point
-	get_viewport().push_input(motion, true)
+	if pressed:
+		get_viewport().push_input(motion, true)
 	var event := InputEventMouseButton.new()
 	event.position = viewport_point
 	event.button_index = MOUSE_BUTTON_LEFT
+	event.button_mask = MOUSE_BUTTON_MASK_LEFT if pressed else 0
 	event.pressed = pressed
 	get_viewport().push_input(event, true)
 
@@ -329,9 +332,87 @@ func _verify_interaction(instance: Control) -> void:
 	get_viewport().push_input(right, true)
 	_check(instance._selected_item == &"", "Right click failed to cancel selection")
 	_check(session.current_page == &"desk", "Cancel also navigated")
+	right.pressed = false
+	get_viewport().push_input(right, true)
 	# All authored pages have a working fixed retreat, independently of history.
 	for id in instance.page_data:
 		instance.navigate(id)
 		var expected: StringName = instance._fallback_back()
 		await _click(instance, Vector2(0.5, 0.975))
 		_check(session.current_page == expected, "Native return failed: " + str(id))
+
+
+func _verify_authoring_and_progress(instance: Control) -> void:
+	var session: NucleusAdventureSession = instance.session
+	var pocket: CabinInventory = instance.inventory
+	instance.navigate(&"computer_screen")
+	session.set_flag(&"backup_loaded", false)
+	_check(instance.screen.activate(&"backup_log") == ERR_DOES_NOT_EXIST,
+		"Hidden log accepts activation")
+	session.set_flag(&"backup_loaded", true)
+	_check(instance.screen.activate(&"desktop_inspect") == ERR_DOES_NOT_EXIST,
+		"Old computer prompt survives state update")
+	_check(instance.screen.activate(&"backup_log") == OK, "Unlocked log unavailable")
+	# Allocate drops by free space, not catalog order, and prevent overlap with world items.
+	for id in pocket.definitions:
+		if pocket.storage.has_item(id):
+			_check(pocket.discard(id, &"cabin_shelf"), "Drop allocation failed")
+	var locations := pocket.items_on_page(&"cabin_shelf")
+	for i in locations.size():
+		var a: Array = pocket.world[locations[i]]["rect"]
+		var first := Rect2(a[0], a[1], a[2], a[3])
+		_check(first.end.x <= 1 and first.end.y < 0.935, "Drop escaped image")
+		for j in range(i + 1, locations.size()):
+			var b: Array = pocket.world[locations[j]]["rect"]
+			_check(not first.intersects(Rect2(b[0], b[1], b[2], b[3])), "Drops overlap")
+	pocket.pickup(&"brass_key")
+	instance._select_item(&"brass_key")
+	pocket.discard(&"brass_key", &"desk")
+	for button in instance._slots.get_children():
+		if button.icon == null:
+			_check(button.modulate == Color.WHITE and button.disabled, "Empty pocket state")
+	# Save storage is owned by Nucleus; use an isolated slot and clean it afterwards.
+	var slot := "cabin_smoke_%d" % Time.get_ticks_usec()
+	var snapshot: Dictionary = instance.capture_progress()
+	_check(instance.save_progress(slot) == OK, "Native save failed")
+	instance.navigate(&"bed")
+	session.set_flag(&"backup_loaded", false)
+	_check(instance.load_progress(slot) == OK, "Native load failed")
+	_check(instance.capture_progress() == snapshot, "Progress round-trip changed state")
+	_check(NucleusSave.delete_slot(slot) == OK, "Test save cleanup failed")
+	var invalid := snapshot.duplicate(true)
+	invalid["adventure"]["page"] = "missing_page"
+	_check(instance.restore_progress(invalid) != OK, "Unknown saved page accepted")
+	_check(instance.capture_progress() == snapshot, "Rejected load changed live state")
+	invalid = snapshot.duplicate(true)
+	invalid["items"]["world"][&"brass_key"]["page"] = "missing_page"
+	_check(instance.restore_progress(invalid) != OK, "Unknown item location accepted")
+	_check(instance.capture_progress() == snapshot, "Bad item location changed live state")
+	instance.set_paused(true)
+	_check(instance._shader_select.has_focus(), "Pause has no keyboard focus")
+	instance.set_paused(false)
+	_check(instance.screen.has_focus(), "Resume did not return keyboard focus")
+
+	# Exercise inventory buttons through GUI dispatch rather than helper-only selection.
+	pocket.pickup(&"brass_key")
+	await get_tree().process_frame
+	var pocket_button: Button = instance._slots.get_child(0)
+	var center := pocket_button.get_global_transform_with_canvas() * (pocket_button.size * 0.5)
+	_mouse(center, true)
+	_mouse(center, false)
+	await get_tree().process_frame
+
+	_check(instance._inspect_panel.visible, "Pocket GUI click did not open examination")
+	var use_button: Button = instance._inspect_panel.get_child(0).get_child(3)
+	center = use_button.get_global_transform_with_canvas() * (use_button.size * 0.5)
+	_mouse(center, true)
+	_mouse(center, false)
+	await get_tree().process_frame
+	_check(not instance._inspect_panel.visible and instance._selected_item == &"brass_key",
+		"Use button did not select and close examination")
+	var escape := InputEventKey.new()
+	escape.keycode = KEY_ESCAPE
+	escape.pressed = true
+	get_viewport().push_input(escape, true)
+	_check(instance._selected_item == &"" and not instance._paused,
+		"Escape must cancel selection before pausing")

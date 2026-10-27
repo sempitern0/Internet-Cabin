@@ -200,3 +200,58 @@ Referencias oficiales consultadas:
 - [Control y propagación GUI](https://docs.godotengine.org/en/stable/classes/class_control.html)
 - [Orden de entrega de InputEvent](https://docs.godotengine.org/en/stable/tutorials/inputs/inputevent.html)
 - [Godot 4.7.2](https://godotengine.org/article/maintenance-release-godot-4-7-2/)
+
+## Contenido condicional y validación de autoría
+
+Antes de probar o exportar, ejecutar `python3 scripts/ci/check_cabin_content.py`.
+CI lo ejecuta junto con sus pruebas de mutación. Comprueba IDs únicos, destinos,
+retornos, alcanzabilidad estructural, recursos, rectángulos, polígonos y coherencia
+básica de reglas. La alcanzabilidad no demuestra que todos los puzzles sean resolubles:
+las combinaciones de banderas y los bloqueos narrativos necesitan una partida de prueba.
+
+Cada hotspot acepta `visible_when` (todas las banderas deben estar activas) y
+`hidden_when` (ninguna debe estar activa). Los cambios de estado actualizan las
+zonas inmediatamente, incluso sin cambiar de imagen. Un hotspot oculto no aparece
+en el hit test ni puede activarse con el teclado. `computer_screen` incluye un
+caso completo: `desktop_inspect` desaparece cuando `backup_loaded` se activa y
+`backup_log` lo sustituye, conservando el mismo rectángulo.
+
+Las acciones admiten `required_flags`, `forbidden_flags`, `required_item`,
+`consume_item`, `give_item`, `set_flags`, `clear_flags`, `next_screen`,
+`message_key` y `one_shot`. `next_screen` debe ser una página concreta; los aliases
+se usan en `target` y rutas de navegación. No combinar `target` y `action` en una zona.
+El campo `completed_hint` permite escribir una respuesta propia al repetir una acción.
+Las reglas siguen ejecutándose en `NucleusAdventureSession`.
+
+Para entregar un objeto como recompensa, declararlo en `cabin_items.json`, con
+`available: false` si no debe poder recogerse inicialmente. `give_item` admite su ID;
+el éxito lo retira del mundo para evitar duplicados. El inventario mantiene la
+capacidad de dos objetos. Conviene usar `one_shot` para recompensas únicas.
+El descarte elige una celda libre de una cuadrícula de 12 posiciones por vista,
+comprobando colisiones con los recogibles presentes. Si no cabe, conserva el objeto
+y pide probar otra vista; nunca elimina el objeto ni lo coloca fuera del encuadre.
+
+## Guardado manual y recuperación
+
+Pausa incluye **Guardar partida** y **Cargar partida**. El slot `internet_cabin`
+se almacena mediante `NucleusSave`; no se escribe una segunda implementación de disco.
+El juego guarda un esquema propio de versión 1 con página, banderas, visitas,
+acciones completadas, inventario y posiciones de objetos. No guarda selección,
+historial de navegación ni estado de las ventanas. Cargar no reproduce eventos de entrada.
+
+Se usa directamente el servicio Nucleus porque el adaptador genérico de participantes
+`NucleusSaveSession.apply_snapshot` no propaga rechazos de restauración. El juego
+valida su inventario y ubicaciones antes de pedir a Nucleus que restaure la sesión;
+solo aplica el inventario si la sesión acepta la página y el esquema. No modifica el contrato compartido.
+Las opciones visuales siguen siendo ajustes de la sesión, no preferencias persistentes.
+Los cambios futuros de IDs de páginas/objetos requieren una migración; no renombrarlos
+sin tratar la compatibilidad de las partidas existentes.
+
+## Alcance de esta revisión
+
+Probado con Godot 4.7.2: clics reales inyectados en viewport, retornos, modales,
+condiciones al cambiar banderas, descarte sin solapamientos, estados de bolsillos,
+foco de pausa, guardado/carga en disco con slot temporal y rechazo de datos inválidos.
+El addon de localización se comprueba dentro del editor con gettext en una copia aislada.
+La revisión headless no acredita el acabado gráfico del dock, Forward+ en GPU,
+la sensación del cursor físico, el audio final ni una exportación de distribución.

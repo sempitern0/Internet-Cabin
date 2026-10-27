@@ -35,7 +35,7 @@ func _ready() -> void:
 		world[id] = {
 			"page": spec["start"]["page"],
 			"rect": spec["start"]["rect"],
-			"available": true,
+			"available": bool(spec.get("available", true)),
 		}
 	storage = NucleusInventory.new()
 	storage.name = "Storage"
@@ -67,13 +67,15 @@ func inspect(id: StringName) -> void:
 func discard(id: StringName, page_id: StringName) -> bool:
 	if storage == null or page_id == &"" or not definitions.has(id):
 		return false
+	var placement := _drop_rect(page_id)
+	if placement.is_empty():
+		pickup_failed.emit("No queda espacio aquí. Prueba en otra vista.")
+		return false
 	if storage.remove_item(id) != 1:
 		return false
-	# Stable per-item drop lanes keep two discarded items separately clickable.
-	var lane := definitions.keys().find(id)
 	world[id] = {
 		"page": String(page_id),
-		"rect": [0.12 + lane * 0.15, 0.78, 0.12, 0.11],
+		"rect": placement,
 		"available": true,
 	}
 	world_changed.emit()
@@ -90,6 +92,15 @@ func capture_state() -> Dictionary:
 	return {"inventory": storage.capture_state(), "world": world.duplicate(true)}
 
 func restore_state(state: Dictionary) -> bool:
+	if not validate_state(state):
+		return false
+	world = state["world"].duplicate(true)
+	storage.restore_state(state["inventory"])
+	world_changed.emit()
+	return true
+
+
+func validate_state(state: Dictionary) -> bool:
 	# Nucleus allows over-capacity restoration for migrations; this game does not.
 	# Validate the complete snapshot before touching either writable owner.
 	var bag: Variant = state.get("inventory")
@@ -107,7 +118,6 @@ func restore_state(state: Dictionary) -> bool:
 		if not definitions.has(id) or held.has(id):
 			return false
 		held[id] = true
-	var restored := {}
 	for id in definitions:
 		var location: Variant = saved.get(id)
 		if not location is Dictionary or not location.get("available") is bool:
@@ -127,8 +137,21 @@ func restore_state(state: Dictionary) -> bool:
 			return false
 		if rect.end.x > 1 or rect.end.y > 0.935:
 			return false
-		restored[id] = location.duplicate(true)
-	world = restored
-	storage.restore_state(bag)
-	world_changed.emit()
 	return true
+
+
+func _drop_rect(page_id: StringName) -> Array:
+	# Allocate a free visible cell, independent of catalog size or ordering.
+	for row in range(2):
+		for column in range(6):
+			var candidate := Rect2(0.08 + column * 0.14, 0.79 - row * 0.13, 0.12, 0.11)
+			var occupied := false
+			for item_id in items_on_page(page_id):
+				var r: Array = world[item_id]["rect"]
+				if candidate.intersects(Rect2(r[0], r[1], r[2], r[3])):
+					occupied = true
+					break
+			if not occupied:
+				return [candidate.position.x, candidate.position.y,
+					candidate.size.x, candidate.size.y]
+	return []

@@ -834,7 +834,30 @@
           "action": {
             "message_key": "computer_placeholder"
           },
-          "priority": 2
+          "priority": 2,
+          "hidden_when": [
+            "backup_loaded"
+          ]
+        },
+        {
+          "id": "backup_log",
+          "label": "Leer registro BACKUP 98",
+          "rect": [
+            0.27,
+            0.24,
+            0.45,
+            0.47
+          ],
+          "action": {
+            "required_flags": [
+              "backup_loaded"
+            ],
+            "message_key": "BACKUP 98 · 03:14. El registro sigue activo. La hora no coincide con el turno anotado."
+          },
+          "priority": 2,
+          "visible_when": [
+            "backup_loaded"
+          ]
         }
       ],
       "back_target": "desk",
