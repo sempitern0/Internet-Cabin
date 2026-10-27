@@ -21,6 +21,34 @@ func _run_smoke() -> void:
 		push_error("Internet Cabin boot failed")
 		get_tree().quit(1)
 		return
+	var pocket: CabinInventory = instance.inventory
+	if pocket.storage.max_slots != 2:
+		push_error("Cabin pocket capacity must equal two")
+		get_tree().quit(1)
+		return
+	if not pocket.pickup(&"cd_rom") or not pocket.pickup(&"employee_photos"):
+		push_error("First two items should fit")
+		get_tree().quit(1)
+		return
+	if pocket.pickup(&"brass_key") or pocket.storage.get_used_slots() != 2:
+		push_error("Third item bypassed inventory capacity")
+		get_tree().quit(1)
+		return
+	if not pocket.discard(&"cd_rom", &"desktop_tower"):
+		push_error("Discard failed")
+		get_tree().quit(1)
+		return
+	if not pocket.pickup(&"brass_key"):
+		push_error("Freed slot cannot accept an item")
+		get_tree().quit(1)
+		return
+	var snapshot := pocket.capture_state()
+	pocket.storage.clear()
+	pocket.restore_state(snapshot)
+	if not pocket.storage.has_item(&"brass_key"):
+		push_error("Cabin inventory restore lost item state")
+		get_tree().quit(1)
+		return
 	var renderer: NucleusScreenShaderStack = instance.stack
 	if renderer.stage_count() != 1 or renderer.get_pass_material(&"vhs") == null:
 		push_error("VHS pass not active on initial page")
