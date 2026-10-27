@@ -275,7 +275,7 @@ func _find_pickup(point: Vector2) -> StringName:
 		return &""
 	for id in inventory.items_on_page(session.current_page):
 		var data: Dictionary = inventory.definitions[id]
-		var rect_values: Array = data["start"]["rect"]
+		var rect_values: Array = inventory.world[id]["rect"]
 		var area := Rect2(rect_values[0], rect_values[1],
 			rect_values[2], rect_values[3])
 		if area.has_point(point):
