@@ -1,0 +1,85 @@
+{
+  "schema": 1,
+  "items": [
+    {
+      "id": "cd_rom",
+      "name": "CD-ROM · BACKUP 98",
+      "description": "Un disco de respaldo sin caja. La etiqueta lleva la fecha del antiguo turno.",
+      "icon": "res://assets/items/cd_rom_icon.svg",
+      "examine": "res://assets/items/cd_rom_examine.svg",
+      "start": {
+        "page": "desktop_tower",
+        "rect": [
+          0.56,
+          0.59,
+          0.13,
+          0.16
+        ]
+      }
+    },
+    {
+      "id": "employee_photos",
+      "name": "Fotografías del empleado",
+      "description": "Fotos reveladas en papel. El empleado anterior duerme en esta misma cama, de noche.",
+      "icon": "res://assets/items/employee_photos_icon.svg",
+      "examine": "res://assets/items/employee_photos_examine.svg",
+      "start": {
+        "page": "bed_close",
+        "rect": [
+          0.39,
+          0.64,
+          0.18,
+          0.14
+        ]
+      }
+    },
+    {
+      "id": "brass_key",
+      "name": "Llave de latón",
+      "description": "Una llave corriente y antigua. No está claro qué cerradura abre.",
+      "icon": "res://assets/items/brass_key_icon.svg",
+      "examine": "res://assets/items/brass_key_examine.svg",
+      "start": {
+        "page": "cabin_shelf",
+        "rect": [
+          0.54,
+          0.54,
+          0.15,
+          0.15
+        ]
+      }
+    },
+    {
+      "id": "fox_figurine",
+      "name": "Figura del zorro",
+      "description": "Una pequeña talla de madera. Alguien la dejó mirando hacia la puerta.",
+      "icon": "res://assets/items/fox_figurine_icon.svg",
+      "examine": "res://assets/items/fox_figurine_examine.svg",
+      "start": {
+        "page": "cabin_boots",
+        "rect": [
+          0.45,
+          0.66,
+          0.17,
+          0.14
+        ]
+      }
+    },
+    {
+      "id": "strange_receipt",
+      "name": "Recibo de madrugada",
+      "description": "Un justificante casi borrado, fechado a las 03:14. Un pequeño secreto.",
+      "icon": "res://assets/items/strange_receipt_icon.svg",
+      "examine": "res://assets/items/strange_receipt_examine.svg",
+      "start": {
+        "page": "cabin_clothes",
+        "rect": [
+          0.35,
+          0.58,
+          0.16,
+          0.15
+        ]
+      }
+    }
+  ]
+}
