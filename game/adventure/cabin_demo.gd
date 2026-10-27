@@ -130,6 +130,10 @@ func _input(event: InputEvent) -> void:
 	if event is InputEventMouseButton and not _paused and session != null:
 		var click := event as InputEventMouseButton
 		if click.button_index == MOUSE_BUTTON_LEFT:
+			if _inspect_panel != null and _inspect_panel.visible:
+				return
+			if _slots != null and _slots.get_global_rect().has_point(click.position):
+				return
 			if _show_guides and _arrows != null:
 				for guide in _arrows.get_children():
 					if guide is Control and guide.get_global_rect().has_point(click.position):
@@ -166,17 +170,11 @@ func _route_click(point: Vector2) -> void:
 	if point.y >= 0.935:
 		navigate(_fallback_back())
 		return
+	var collectible := _find_pickup(point)
+	if collectible != &"":
+		inventory.pickup(collectible)
+		return
 	var hit := screen.hotspot_at(point)
-	if hit == null:
-		for id in inventory.items_on_page(session.current_page):
-			var rect_values: Array = inventory.definitions[id]["start"]["rect"]
-			if inventory.world[id]["page"] != String(session.current_page):
-				continue
-			var area := Rect2(rect_values[0], rect_values[1],
-				rect_values[2], rect_values[3])
-			if area.has_point(point):
-				inventory.pickup(id)
-				return
 	if hit != null:
 		if hit.action == null and hit.destination != &"":
 			navigate(hit.destination)
@@ -187,6 +185,8 @@ func _route_click(point: Vector2) -> void:
 
 
 func _process(_delta: float) -> void:
+	if _inspect_panel != null and _inspect_panel.visible:
+		return
 	if _paused or session == null:
 		return
 	var point := screen.normalized_point(screen.get_local_mouse_position())
@@ -270,12 +270,13 @@ func _navigate_edge(point: Vector2) -> void:
 
 
 func _find_pickup(point: Vector2) -> StringName:
-	if inventory == null or session == null:
+	if inventory == null or session == null or point.x < 0.0:
 		return &""
 	for id in inventory.items_on_page(session.current_page):
 		var data: Dictionary = inventory.definitions[id]
 		var rect_values: Array = data["start"]["rect"]
-		var area := Rect2(rect_values[0], rect_values[1], rect_values[2], rect_values[3])
+		var area := Rect2(rect_values[0], rect_values[1],
+			rect_values[2], rect_values[3])
 		if area.has_point(point):
 			return id
 	return &""
@@ -368,8 +369,8 @@ func _load_cursor(path: String) -> Texture2D:
 		return original
 	# Maximum 32 physical pixels. Nearest resize avoids texture filtering blur.
 	var length := maxi(bitmap.get_width(), bitmap.get_height())
-	if length > 32:
-		var ratio := 32.0 / float(length)
+	if length > 24:
+		var ratio := 24.0 / float(length)
 		bitmap.resize(maxi(1, roundi(bitmap.get_width() * ratio)),
 			maxi(1, roundi(bitmap.get_height() * ratio)),
 			Image.INTERPOLATE_NEAREST)
