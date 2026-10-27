@@ -31,7 +31,11 @@ func _ready() -> void:
 		definition.max_stack_size = 1
 		catalog.items.append(definition)
 		definitions[id] = spec
-		world[id] = {"page": spec["start"]["page"], "available": true}
+		world[id] = {
+			"page": spec["start"]["page"],
+			"rect": spec["start"]["rect"],
+			"available": true,
+		}
 	storage = NucleusInventory.new()
 	storage.name = "Storage"
 	storage.max_slots = 2
@@ -61,7 +65,11 @@ func inspect(id: StringName) -> void:
 func discard(id: StringName, page_id: StringName) -> bool:
 	if storage == null or storage.remove_item(id) != 1:
 		return false
-	world[id] = {"page": String(page_id), "available": true}
+	world[id] = {
+		"page": String(page_id),
+		"rect": [0.43, 0.77, 0.14, 0.11],
+		"available": true,
+	}
 	return true
 
 func items_on_page(page_id: StringName) -> Array[StringName]:
