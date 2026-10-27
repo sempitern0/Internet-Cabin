@@ -20,6 +20,7 @@ var inventory: CabinInventory
 var _slots: HBoxContainer
 var _inspect_panel: PanelContainer
 var _inspect_image: TextureRect
+var _inspected_item: StringName
 var _inspect_text: Label
 var session: NucleusAdventureSession
 var page_data: Dictionary = {}
@@ -316,6 +317,10 @@ func _make_inventory_ui() -> void:
 	close_button.text = "Cerrar"
 	content.add_child(close_button)
 	close_button.pressed.connect(func(): _inspect_panel.hide())
+	var drop_button := Button.new()
+	drop_button.text = "Dejar aquí"
+	content.add_child(drop_button)
+	drop_button.pressed.connect(_drop_inspected_item)
 	_inspect_panel.hide()
 	inventory.storage.changed.connect(_refresh_inventory)
 	_refresh_inventory()
@@ -345,10 +350,20 @@ func _slot_pressed(index: int) -> void:
 
 
 func _inspect_item(id: StringName) -> void:
+	_inspected_item = id
 	var data: Dictionary = inventory.definitions[id]
 	_inspect_image.texture = load(str(data.get("examine", ""))) as Texture2D
 	_inspect_text.text = str(data.get("name", "")) + "\n" + str(data.get("description", ""))
 	_inspect_panel.show()
+
+
+func _drop_inspected_item() -> void:
+	if session == null or _inspected_item == &"":
+		return
+	if inventory.discard(_inspected_item, session.current_page):
+		_inspect_panel.hide()
+		_show_inventory_message("Has dejado el objeto aquí.")
+		_inspected_item = &""
 
 
 func _show_inventory_message(message: String) -> void:
@@ -426,7 +441,7 @@ func _make_hud() -> void:
 		button.offset_right = 54 if side == "left" else -16 if side == "right" else 19
 		button.offset_top = -52
 		if side == "back":
-			button.rotation_degrees = -90.0
+			button.rotation_degrees = 90.0
 			button.pivot_offset = Vector2(19, 20)
 		button.offset_bottom = -12
 	_arrows.hide()
