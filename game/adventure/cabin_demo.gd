@@ -16,6 +16,11 @@ const SHADERS := {
 @onready var stack: NucleusScreenShaderStack = $Stage/Artwork/Screen/ShaderStack
 @onready var overlay: Control = $HUD/Overlay
 @onready var breathing: InternetCabinBreathing = $Breathing
+var inventory: CabinInventory
+var _slots: HBoxContainer
+var _inspect_panel: PanelContainer
+var _inspect_image: TextureRect
+var _inspect_text: Label
 var session: NucleusAdventureSession
 var page_data: Dictionary = {}
 var history: Array[StringName] = []
@@ -93,6 +98,13 @@ func _ready() -> void:
 				region.destination = StringName(spec.get("target", ""))
 			page.hotspots.append(region)
 		pages.append(page)
+	inventory = CabinInventory.new()
+	inventory.name = "CabinInventory"
+	add_child(inventory)
+	inventory.picked_up.connect(_on_item_picked_up)
+	inventory.pickup_failed.connect(_show_inventory_message)
+	inventory.inspected.connect(_inspect_item)
+	_make_inventory_ui()
 	session = NucleusAdventureSession.new()
 	session.name = "AdventureSession"
 	session.screen = screen
@@ -155,6 +167,16 @@ func _route_click(point: Vector2) -> void:
 		navigate(_fallback_back())
 		return
 	var hit := screen.hotspot_at(point)
+	if hit == null:
+		for id in inventory.items_on_page(session.current_page):
+			var rect_values: Array = inventory.definitions[id]["start"]["rect"]
+			if inventory.world[id]["page"] != String(session.current_page):
+				continue
+			var area := Rect2(rect_values[0], rect_values[1],
+				rect_values[2], rect_values[3])
+			if area.has_point(point):
+				inventory.pickup(id)
+				return
 	if hit != null:
 		if hit.action == null and hit.destination != &"":
 			navigate(hit.destination)
@@ -170,7 +192,7 @@ func _process(_delta: float) -> void:
 	var point := screen.normalized_point(screen.get_local_mouse_position())
 	var hit := screen.hotspot_at(point)
 	var x := point.x
-	var active := hit != null or (point.y >= 0 and point.y <= 1.0
+	var active := hit != null or _find_pickup(point) != &"" or (point.y >= 0 and point.y <= 1.0
 		and (x <= 0.11 or x >= 0.89 or point.y >= 0.86))
 	_apply_game_cursor(active)
 	_hint.text = str(hit.description_key) if hit != null and _show_guides else ""
@@ -246,6 +268,97 @@ func _navigate_edge(point: Vector2) -> void:
 		navigate(StringName(entry.get("edge_right", _fallback_back())))
 
 
+
+func _find_pickup(point: Vector2) -> StringName:
+	if inventory == null or session == null:
+		return &""
+	for id in inventory.items_on_page(session.current_page):
+		var data: Dictionary = inventory.definitions[id]
+		var rect_values: Array = data["start"]["rect"]
+		var area := Rect2(rect_values[0], rect_values[1], rect_values[2], rect_values[3])
+		if area.has_point(point):
+			return id
+	return &""
+
+
+func _make_inventory_ui() -> void:
+	_slots = HBoxContainer.new()
+	_slots.name = "InventorySlots"
+	_slots.position = Vector2(14, 14)
+	_slots.add_theme_constant_override("separation", 6)
+	overlay.add_child(_slots)
+	for index in range(2):
+		var slot := Button.new()
+		slot.name = "Pocket_%d" % index
+		slot.custom_minimum_size = Vector2(48, 52)
+		slot.tooltip_text = "Bolsillo %d" % (index + 1)
+		slot.text = "·"
+		slot.focus_mode = Control.FOCUS_ALL
+		slot.pressed.connect(_slot_pressed.bind(index))
+		_slots.add_child(slot)
+	_inspect_panel = PanelContainer.new()
+	_inspect_panel.name = "ItemExamination"
+	_inspect_panel.set_anchors_and_offsets_preset(Control.PRESET_CENTER)
+	_inspect_panel.custom_minimum_size = Vector2(390, 340)
+	overlay.add_child(_inspect_panel)
+	var content := VBoxContainer.new()
+	_inspect_panel.add_child(content)
+	_inspect_image = TextureRect.new()
+	_inspect_image.custom_minimum_size = Vector2(290, 210)
+	_inspect_image.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	_inspect_image.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	content.add_child(_inspect_image)
+	_inspect_text = Label.new()
+	_inspect_text.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	content.add_child(_inspect_text)
+	var close_button := Button.new()
+	close_button.text = "Cerrar"
+	content.add_child(close_button)
+	close_button.pressed.connect(func(): _inspect_panel.hide())
+	_inspect_panel.hide()
+	inventory.storage.changed.connect(_refresh_inventory)
+	_refresh_inventory()
+
+
+func _refresh_inventory() -> void:
+	if _slots == null or inventory.storage == null:
+		return
+	var stacks := inventory.storage.get_stacks()
+	for index in range(2):
+		var button := _slots.get_child(index) as Button
+		if index >= stacks.size():
+			button.icon = null
+			button.text = "·"
+			button.tooltip_text = "Bolsillo vacío"
+			continue
+		var definition: NucleusItemDefinition = stacks[index].definition
+		button.text = ""
+		button.icon = definition.icon
+		button.tooltip_text = definition.display_name
+
+
+func _slot_pressed(index: int) -> void:
+	var stacks := inventory.storage.get_stacks()
+	if index < stacks.size():
+		inventory.inspect(stacks[index].get_item_id())
+
+
+func _inspect_item(id: StringName) -> void:
+	var data: Dictionary = inventory.definitions[id]
+	_inspect_image.texture = load(str(data.get("examine", ""))) as Texture2D
+	_inspect_text.text = str(data.get("name", "")) + "\n" + str(data.get("description", ""))
+	_inspect_panel.show()
+
+
+func _show_inventory_message(message: String) -> void:
+	_hint.text = message
+	_hint.show()
+
+
+func _on_item_picked_up(id: StringName) -> void:
+	_show_inventory_message("Recogido: " + str(inventory.definitions[id]["name"]))
+
+
 func _load_cursor(path: String) -> Texture2D:
 	var original := load(path) as Texture2D
 	if original == null:
@@ -311,6 +424,9 @@ func _make_hud() -> void:
 		button.offset_left = 16 if side == "left" else -54 if side == "right" else -19
 		button.offset_right = 54 if side == "left" else -16 if side == "right" else 19
 		button.offset_top = -52
+		if side == "back":
+			button.rotation_degrees = -90.0
+			button.pivot_offset = Vector2(19, 20)
 		button.offset_bottom = -12
 	_arrows.hide()
 	_hint = Label.new()
