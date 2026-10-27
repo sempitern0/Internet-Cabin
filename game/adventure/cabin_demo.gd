@@ -1,5 +1,6 @@
 extends Control
 ## Scene-owned navigation, pause UI, shader auditions and audio cues.
+const CabinSessionScript = preload("res://game/adventure/cabin_session.gd")
 const MAP_PATH := "res://game/adventure/cabin_map.json"
 const AUDIO_PATH := "res://game/adventure/cabin_audio_events.json"
 const BASE := "res://assets/cabin/"
@@ -17,17 +18,21 @@ const SHADERS := {
 @onready var overlay: Control = $HUD/Overlay
 @onready var breathing: InternetCabinBreathing = $Breathing
 var inventory: CabinInventory
+var _world_items: Node2D
 var _slots: HBoxContainer
 var _inspect_panel: PanelContainer
 var _inspect_image: TextureRect
 var _inspected_item: StringName
 var _inspect_text: Label
-var session: NucleusAdventureSession
+var session: CabinSessionScript
 var page_data: Dictionary = {}
 var history: Array[StringName] = []
 var _suppress_history := false
 var _paused := false
 var _show_guides := false
+var _selected_item: StringName
+var _message_until := 0
+var _modal: ColorRect
 var _shader_name := "Fathom"
 var _intensity := 0.55
 var _audio_events: Dictionary = {}
@@ -40,17 +45,12 @@ var _shader_strength: HSlider
 var _cursor_normal: Texture2D
 var _cursor_hover: Texture2D
 var _cursor_active := false
-var _press_page: StringName
-var _press_position := Vector2(-1, -1)
 
 
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	screen.process_mode = Node.PROCESS_MODE_PAUSABLE
 	breathing.process_mode = Node.PROCESS_MODE_PAUSABLE
-	$HUD/Overlay/Settings.hide()
-	$HUD/Overlay/Status.hide()
-	$HUD/Overlay/Hint.hide()
 	var file := FileAccess.open(MAP_PATH, FileAccess.READ)
 	if file == null:
 		push_error("No cabin map")
@@ -89,6 +89,11 @@ func _ready() -> void:
 				var action := NucleusScreenAction.new()
 				var rule: Dictionary = spec["action"]
 				action.next_screen = StringName(rule.get("next_screen", ""))
+				action.required_item = StringName(rule.get("required_item", ""))
+				action.consume_item = bool(rule.get("consume_item", false))
+				action.one_shot = bool(rule.get("one_shot", false))
+				for flag in rule.get("required_flags", []):
+					action.required_flags.append(StringName(flag))
 				action.message_key = StringName(rule.get("message_key", ""))
 				for flag in rule.get("set_flags", []):
 					action.set_flags.append(StringName(flag))
@@ -106,9 +111,16 @@ func _ready() -> void:
 	inventory.pickup_failed.connect(_show_inventory_message)
 	inventory.inspected.connect(_inspect_item)
 	_make_inventory_ui()
-	session = NucleusAdventureSession.new()
+	_world_items = preload("res://game/inventory/cabin_world_items.gd").new()
+	_world_items.screen = screen
+	_world_items.inventory = inventory
+	screen.add_child(_world_items)
+	screen.resized.connect(_world_items.queue_redraw)
+	session = CabinSessionScript.new()
 	session.name = "AdventureSession"
 	session.screen = screen
+	session.inventory = inventory.storage
+	session.interaction_requested.connect(_on_interaction)
 	session.shader_stack = stack
 	session.pages = pages
 	session.initial_page = StringName(data.get("initial_page", "overview_closed"))
@@ -116,48 +128,49 @@ func _ready() -> void:
 	session.page_changed.connect(_on_page_changed)
 	session.message_requested.connect(_on_message)
 	screen.background_activated.connect(_on_background)
-	# One owner for physical clicks: the game routes edges and hotspots.
-	screen.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	# Native GUI dispatch gives HUD and modals priority over the world.
+	screen.gui_input.connect(_world_gui_input)
+	inventory.world_changed.connect(_refresh_world)
 	_cursor_normal = _load_cursor("res://assets/cursors/Circle.png")
 	_cursor_hover = _load_cursor("res://assets/cursors/MidRing.png")
-	_apply_game_cursor(false)
-	screen.hotspot_activated.connect(_on_interaction)
+	_apply_game_cursor(false, true)
 	_make_hud()
 	breathing.target = screen
 	_on_page_changed(session.current_page)
+	screen.grab_focus()
 
 
 func _input(event: InputEvent) -> void:
-	if event is InputEventMouseButton and not _paused and session != null:
-		var click := event as InputEventMouseButton
-		if click.button_index == MOUSE_BUTTON_LEFT:
-			if _inspect_panel != null and _inspect_panel.visible:
-				return
-			if _slots != null and _slots.get_global_rect().has_point(click.position):
-				return
-			if _show_guides and _arrows != null:
-				for guide in _arrows.get_children():
-					if guide is Control and guide.get_global_rect().has_point(click.position):
-						return
-			if click.pressed:
-				_press_page = session.current_page
-				_press_position = _pointer_image_point(click.position)
+	if not event is InputEventKey or not event.pressed or event.echo:
+		return
+	if event.keycode == KEY_ESCAPE:
+		if _paused:
+			set_paused(false)
+		elif _inspect_panel.visible:
+			_close_inspection()
+		elif _selected_item != &"":
+			_select_item(&"")
+		else:
+			set_paused(true)
+		get_viewport().set_input_as_handled()
+	elif event.keycode == KEY_BACKSPACE and not _paused and not _inspect_panel.visible:
+		_navigate_side("back")
+		get_viewport().set_input_as_handled()
+	elif event.keycode == KEY_TAB and not _paused and not _inspect_panel.visible:
+		_show_guides = not _show_guides
+		_update_arrows()
+		get_viewport().set_input_as_handled()
+
+
+func _world_gui_input(event: InputEvent) -> void:
+	if event is InputEventMouseButton and event.pressed:
+		if event.button_index == MOUSE_BUTTON_RIGHT and not _paused:
+			if _inspect_panel.visible:
+				_close_inspection()
+			elif _selected_item != &"":
+				_select_item(&"")
 			else:
-				var point := _pointer_image_point(click.position)
-				if _press_page == session.current_page and point.x >= 0.0:
-					if point.distance_to(_press_position) <= 0.025:
-						_route_click(point)
-				_press_page = &""
-				_press_position = Vector2(-1, -1)
-			get_viewport().set_input_as_handled()
-			return
-	if event is InputEventKey and event.pressed and not event.echo:
-		if event.keycode == KEY_ESCAPE:
-			set_paused(not _paused)
-			get_viewport().set_input_as_handled()
-		elif event.keycode == KEY_TAB and not _paused:
-			_show_guides = not _show_guides
-			_update_arrows()
+				_navigate_side("back")
 			get_viewport().set_input_as_handled()
 
 
@@ -167,36 +180,30 @@ func _pointer_image_point(viewport_point: Vector2) -> Vector2:
 
 
 func _route_click(point: Vector2) -> void:
-	# Reserve only a thin strip for unconditional retreat; objects win elsewhere.
-	if point.y >= 0.935:
-		navigate(_fallback_back())
-		return
-	var collectible := _find_pickup(point)
-	if collectible != &"":
-		inventory.pickup(collectible)
+	# Test/tool entry point uses the same target and activation as native GUI input.
+	if _paused or _inspect_panel.visible:
 		return
 	var hit := screen.hotspot_at(point)
 	if hit != null:
-		if hit.action == null and hit.destination != &"":
-			navigate(hit.destination)
-		else:
-			session.activate_hotspot(hit.id)
-		return
-	_navigate_edge(point)
+		screen.activate(hit.id)
 
 
 func _process(_delta: float) -> void:
-	if _inspect_panel != null and _inspect_panel.visible:
+	if _paused or session == null or _inspect_panel.visible:
 		return
-	if _paused or session == null:
-		return
+	var hovered := get_viewport().gui_get_hovered_control()
+	var over_world := hovered == screen
 	var point := screen.normalized_point(screen.get_local_mouse_position())
-	var hit := screen.hotspot_at(point)
-	var x := point.x
-	var active := hit != null or _find_pickup(point) != &"" or (point.y >= 0 and point.y <= 1.0
-		and (x <= 0.11 or x >= 0.89 or point.y >= 0.86))
-	_apply_game_cursor(active)
-	_hint.text = str(hit.description_key) if hit != null and _show_guides else ""
+	var hit := screen.hotspot_at(point) if over_world else null
+	_apply_game_cursor(hit != null)
+	if Time.get_ticks_msec() < _message_until:
+		return
+	var prompt := str(hit.description_key) if hit != null else ""
+	if _selected_item != &"":
+		var item_name := str(inventory.definitions[_selected_item]["name"])
+		prompt = "Usar %s · %s" % [item_name, prompt if prompt != "" else "elige un objeto"]
+		prompt += "  (Esc: cancelar)"
+	_hint.text = prompt
 
 
 func _resolve(target: StringName) -> StringName:
@@ -211,18 +218,23 @@ func _resolve(target: StringName) -> StringName:
 
 
 func navigate(target: StringName) -> Error:
-	if _paused or session == null:
+	if _paused or session == null or _inspect_panel.visible:
 		return ERR_BUSY
 	if target == &"@previous" and not history.is_empty():
-		var prior: StringName = history.pop_back()
+		var prior := _resolve(history.back())
 		_suppress_history = true
 		var result := session.change_page(prior)
+		if result == OK:
+			history.pop_back()
 		_suppress_history = false
 		return result
 	var destination := _resolve(target)
 	if destination == session.current_page:
 		return OK
-	return session.change_page(destination)
+	var result := session.change_page(destination)
+	if result != OK:
+		_show_inventory_message("No puedes ir por ahí ahora.")
+	return result
 
 
 func _on_page_changed(id: StringName) -> void:
@@ -235,18 +247,19 @@ func _on_page_changed(id: StringName) -> void:
 			if history.size() > 32:
 				history.pop_front()
 	_last_page = id
-	for hotspot in screen.hotspots:
-		if hotspot.action == null and str(hotspot.destination).begins_with("@"):
-			hotspot.destination = _resolve(hotspot.destination)
+	_selected_item = &""
+	_refresh_world()
+	_refresh_inventory()
 	_apply_shader()
 	_play_event("page:" + str(id))
 	_update_arrows()
 
 
-func _on_background(pos: Vector2) -> void:
-	if _paused or not page_data.has(session.current_page):
+func _on_background(_pos: Vector2) -> void:
+	if _paused or _inspect_panel.visible or not page_data.has(session.current_page):
 		return
-	_navigate_edge(pos)
+	if _selected_item != &"":
+		_show_inventory_message("Elige un objeto del escenario para usarlo.")
 
 
 
@@ -257,30 +270,34 @@ func _fallback_back() -> StringName:
 		"back_target", "overview_closed")))
 
 
-func _navigate_edge(point: Vector2) -> void:
-	if point.x < 0.0 or point.x > 1.0 or point.y < 0.0 or point.y > 1.0:
+func _refresh_world() -> void:
+	if session == null or session.current_page == &"":
 		return
-	var entry: Dictionary = page_data[session.current_page]
-	if point.y >= 0.86:
-		navigate(_fallback_back())
-	elif point.x <= 0.11:
-		navigate(StringName(entry.get("edge_left", _fallback_back())))
-	elif point.x >= 0.89:
-		navigate(StringName(entry.get("edge_right", _fallback_back())))
-
-
-
-func _find_pickup(point: Vector2) -> StringName:
-	if inventory == null or session == null or point.x < 0.0:
-		return &""
+	var authored: Array[NucleusScreenHotspot] = []
+	for page in session.pages:
+		if page.id == session.current_page:
+			authored = page.hotspots.duplicate()
+			break
 	for id in inventory.items_on_page(session.current_page):
-		var data: Dictionary = inventory.definitions[id]
-		var rect_values: Array = inventory.world[id]["rect"]
-		var area := Rect2(rect_values[0], rect_values[1],
-			rect_values[2], rect_values[3])
-		if area.has_point(point):
-			return id
-	return &""
+		var values: Array = inventory.world[id]["rect"]
+		var region := NucleusScreenHotspot.new()
+		region.id = StringName("pickup:" + str(id))
+		region.bounds = Rect2(values[0], values[1], values[2], values[3])
+		region.priority = 100
+		region.description_key = StringName("Recoger " + str(inventory.definitions[id]["name"]))
+		authored.append(region)
+	for side in ["left", "right", "back"]:
+		var region := NucleusScreenHotspot.new()
+		region.id = StringName("nav:" + side)
+		region.priority = 200 if side == "back" else -100
+		region.bounds = Rect2(0, 0.935, 1, 0.065) if side == "back" else (
+			Rect2(0, 0, 0.07, 0.935) if side == "left" else Rect2(0.93, 0, 0.07, 0.935))
+		region.description_key = &"Volver" if side == "back" else &"Girar"
+		authored.append(region)
+	screen.hotspots = authored
+	screen.queue_redraw()
+	_world_items.page_id = session.current_page
+	_world_items.queue_redraw()
 
 
 func _make_inventory_ui() -> void:
@@ -292,17 +309,29 @@ func _make_inventory_ui() -> void:
 	for index in range(2):
 		var slot := Button.new()
 		slot.name = "Pocket_%d" % index
-		slot.custom_minimum_size = Vector2(48, 52)
+		slot.custom_minimum_size = Vector2(60, 60)
+		slot.expand_icon = true
+		slot.add_theme_constant_override("icon_max_width", 36)
 		slot.tooltip_text = "Bolsillo %d" % (index + 1)
 		slot.text = "·"
 		slot.focus_mode = Control.FOCUS_ALL
 		slot.pressed.connect(_slot_pressed.bind(index))
 		_slots.add_child(slot)
+	_modal = ColorRect.new()
+	_modal.name = "ModalShield"
+	_modal.color = Color(0, 0, 0, 0.7)
+	_modal.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	_modal.mouse_filter = Control.MOUSE_FILTER_STOP
+	overlay.add_child(_modal)
+	_modal.hide()
 	_inspect_panel = PanelContainer.new()
 	_inspect_panel.name = "ItemExamination"
 	_inspect_panel.set_anchors_and_offsets_preset(Control.PRESET_CENTER)
-	_inspect_panel.custom_minimum_size = Vector2(390, 340)
-	overlay.add_child(_inspect_panel)
+	_inspect_panel.offset_left = -195
+	_inspect_panel.offset_right = 195
+	_inspect_panel.offset_top = -200
+	_inspect_panel.offset_bottom = 200
+	_modal.add_child(_inspect_panel)
 	var content := VBoxContainer.new()
 	_inspect_panel.add_child(content)
 	_inspect_image = TextureRect.new()
@@ -316,7 +345,13 @@ func _make_inventory_ui() -> void:
 	var close_button := Button.new()
 	close_button.text = "Cerrar"
 	content.add_child(close_button)
-	close_button.pressed.connect(func(): _inspect_panel.hide())
+	close_button.pressed.connect(_close_inspection)
+	var use_button := Button.new()
+	use_button.text = "Usar en el escenario"
+	content.add_child(use_button)
+	use_button.pressed.connect(func():
+		_select_item(_inspected_item)
+		_close_inspection())
 	var drop_button := Button.new()
 	drop_button.text = "Dejar aquí"
 	content.add_child(drop_button)
@@ -329,6 +364,8 @@ func _make_inventory_ui() -> void:
 func _refresh_inventory() -> void:
 	if _slots == null or inventory.storage == null:
 		return
+	if _selected_item != &"" and not inventory.storage.has_item(_selected_item):
+		_selected_item = &""
 	var stacks := inventory.storage.get_stacks()
 	for index in range(2):
 		var button := _slots.get_child(index) as Button
@@ -339,6 +376,7 @@ func _refresh_inventory() -> void:
 			continue
 		var definition: NucleusItemDefinition = stacks[index].definition
 		button.text = ""
+		button.modulate = Color(1, 0.75, 0.4) if definition.item_id == _selected_item else Color.WHITE
 		button.icon = definition.icon
 		button.tooltip_text = definition.display_name
 
@@ -354,24 +392,32 @@ func _inspect_item(id: StringName) -> void:
 	var data: Dictionary = inventory.definitions[id]
 	_inspect_image.texture = load(str(data.get("examine", ""))) as Texture2D
 	_inspect_text.text = str(data.get("name", "")) + "\n" + str(data.get("description", ""))
+	_modal.show()
 	_inspect_panel.show()
+	screen.interaction_enabled = false
+	_update_arrows()
+	_apply_game_cursor(false, true)
 
 
 func _drop_inspected_item() -> void:
 	if session == null or _inspected_item == &"":
 		return
 	if inventory.discard(_inspected_item, session.current_page):
-		_inspect_panel.hide()
+		_close_inspection()
 		_show_inventory_message("Has dejado el objeto aquí.")
 		_inspected_item = &""
 
 
 func _show_inventory_message(message: String) -> void:
+	if _hint == null:
+		return
 	_hint.text = message
+	_message_until = Time.get_ticks_msec() + 4500
 	_hint.show()
 
 
 func _on_item_picked_up(id: StringName) -> void:
+	_play_event("pickup:" + str(id))
 	_show_inventory_message("Recogido: " + str(inventory.definitions[id]["name"]))
 
 
@@ -405,14 +451,70 @@ func _apply_game_cursor(hovering: bool, force: bool = false) -> void:
 	Input.set_custom_mouse_cursor(image, Input.CURSOR_ARROW, hotspot)
 	Input.set_custom_mouse_cursor(image, Input.CURSOR_POINTING_HAND, hotspot)
 
+func _close_inspection() -> void:
+	_inspect_panel.hide()
+	_modal.visible = _paused
+	screen.interaction_enabled = not _paused
+	screen.grab_focus()
+	_update_arrows()
+
+
+func _select_item(id: StringName) -> void:
+	_selected_item = id if id != &"" and inventory.storage.has_item(id) else &""
+	_message_until = 0
+	_refresh_inventory()
+
+
 func _on_interaction(id: StringName, _destination: StringName) -> void:
-	_play_event("interaction:" + str(id))
+	if _paused or _inspect_panel.visible:
+		return
+	if str(id).begins_with("nav:"):
+		_navigate_side(str(id).trim_prefix("nav:"))
+		return
+	if str(id).begins_with("pickup:"):
+		if _selected_item != &"":
+			_show_inventory_message("Guarda el objeto seleccionado antes de recoger otro.")
+		else:
+			inventory.pickup(StringName(str(id).trim_prefix("pickup:")))
+		return
+	var spec: Dictionary = {}
+	for candidate in page_data[session.current_page].get("hotspots", []):
+		if StringName(candidate["id"]) == id:
+			spec = candidate
+			break
+	var rule: Dictionary = spec.get("action", {})
+	if bool(rule.get("one_shot", false)) and session.completed.has(
+		"%s/%s" % [session.current_page, id]):
+		_show_inventory_message("Ya has examinado esto. " + str(rule.get("message_key", "")))
+		return
+	var required := StringName(rule.get("required_item", ""))
+	if required != &"" and _selected_item != required:
+		_show_inventory_message(str(spec.get("hint", "Parece que falta algo aquí.")))
+		_play_event("blocked:" + str(id))
+		return
+	if _selected_item != &"" and required == &"":
+		_show_inventory_message("Eso no encaja aquí. Examina el objeto para buscar una pista.")
+		return
+	var result := OK
+	if spec.has("target"):
+		result = navigate(StringName(spec["target"]))
+	else:
+		result = session.activate_hotspot(id)
+	if result == OK:
+		_play_event("interaction:" + str(id))
+		_selected_item = &""
+		_refresh_inventory()
+	else:
+		_show_inventory_message(str(spec.get("hint", "Ahora no ocurre nada más.")))
 
 
 func _on_message(key: StringName) -> void:
 	_play_event("inspect:" + str(key))
-	if _show_guides:
-		_hint.text = str(key)
+	var messages := {
+		"forest_placeholder": "Entre los árboles no se mueve nada. Aun así, te sientes observado.",
+		"computer_placeholder": "El ordenador espera un disco de respaldo en la torre.",
+	}
+	_show_inventory_message(str(messages.get(str(key), str(key))))
 
 
 func _make_hud() -> void:
@@ -433,6 +535,8 @@ func _make_hud() -> void:
 		button.custom_minimum_size = Vector2(38, 40)
 		button.size = Vector2(38, 40)
 		button.mouse_filter = Control.MOUSE_FILTER_STOP
+		button.tooltip_text = "Volver (Retroceso / clic derecho)" if side == "back" else "Girar"
+		button.focus_mode = Control.FOCUS_ALL
 		_arrows.add_child(button)
 		button.pressed.connect(_navigate_side.bind(side))
 		button.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_LEFT if side == "left"
@@ -441,21 +545,32 @@ func _make_hud() -> void:
 		button.offset_right = 54 if side == "left" else -16 if side == "right" else 19
 		button.offset_top = -52
 		if side == "back":
-			button.rotation_degrees = 90.0
+			button.rotation_degrees = -90.0
 			button.pivot_offset = Vector2(19, 20)
 		button.offset_bottom = -12
-	_arrows.hide()
+	_arrows.show()
 	_hint = Label.new()
 	_hint.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_hint.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_WIDE)
-	_hint.offset_top = -50
+	_hint.offset_left = 80
+	_hint.offset_right = -80
+	_hint.offset_top = -105
+	_hint.offset_bottom = -60
+	_hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_hint.add_theme_color_override("font_shadow_color", Color.BLACK)
+	_hint.add_theme_constant_override("shadow_offset_x", 2)
+	_hint.add_theme_constant_override("shadow_offset_y", 2)
 	overlay.add_child(_hint)
 	_pause_panel = PanelContainer.new()
 	_pause_panel.name = "PauseMenu"
 	_pause_panel.custom_minimum_size = Vector2(370, 320)
 	_pause_panel.set_anchors_and_offsets_preset(Control.PRESET_CENTER)
-	overlay.add_child(_pause_panel)
+	_modal.add_child(_pause_panel)
+	_pause_panel.offset_left = -185
+	_pause_panel.offset_right = 185
+	_pause_panel.offset_top = -160
+	_pause_panel.offset_bottom = 160
 	var column := VBoxContainer.new()
 	_pause_panel.add_child(column)
 	var title := Label.new()
@@ -487,7 +602,7 @@ func _make_hud() -> void:
 
 
 func _navigate_side(side: String) -> void:
-	if _paused or not page_data.has(session.current_page):
+	if _paused or _inspect_panel.visible or not page_data.has(session.current_page):
 		return
 	var entry: Dictionary = page_data[session.current_page]
 	if side == "back":
@@ -499,17 +614,22 @@ func _navigate_side(side: String) -> void:
 func _update_arrows() -> void:
 	if _arrows == null or session == null:
 		return
-	_arrows.visible = _show_guides and not _paused
+	_arrows.visible = not _paused and not _inspect_panel.visible
+	_hint.visible = _arrows.visible
+	for button in _arrows.get_children():
+		button.visible = button.name == "back" or _show_guides
 
 
 func set_paused(value: bool) -> void:
 	_paused = value
 	_pause_panel.visible = value
-	screen.interaction_enabled = not value
+	_modal.visible = value or _inspect_panel.visible
+	screen.interaction_enabled = not value and not _inspect_panel.visible
 	_update_arrows()
 	get_tree().paused = value
 	if value:
-		Input.set_custom_mouse_cursor(null)
+		Input.set_custom_mouse_cursor(null, Input.CURSOR_ARROW)
+		Input.set_custom_mouse_cursor(null, Input.CURSOR_POINTING_HAND)
 		_cursor_active = false
 	else:
 		_apply_game_cursor(false, true)
@@ -586,3 +706,10 @@ func _play_event(event_id: String) -> void:
 		if str(entry.get("type")) == "ambient":
 			bus = NucleusAudioBuses.AMBIENT
 		NucleusAudio.play_one_shot(audio, bus)
+
+
+func _exit_tree() -> void:
+	Input.set_custom_mouse_cursor(null, Input.CURSOR_ARROW)
+	Input.set_custom_mouse_cursor(null, Input.CURSOR_POINTING_HAND)
+	if _paused:
+		get_tree().paused = false

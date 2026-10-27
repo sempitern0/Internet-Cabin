@@ -25,9 +25,29 @@
     "stream": "",
     "description": "Fabric rustle"
   },
-  "interaction:door_open": {
+  "interaction:open": {
     "type": "sfx",
     "stream": "",
     "description": "Wooden door creak"
+  },
+  "interaction:close": {
+    "type": "sfx",
+    "stream": "",
+    "description": "Door latch closing"
+  },
+  "interaction:disc_drive": {
+    "type": "sfx",
+    "stream": "",
+    "description": "CD tray and spin"
+  },
+  "interaction:locked_compartment": {
+    "type": "sfx",
+    "stream": "",
+    "description": "Small brass lock"
+  },
+  "pickup:cd_rom": {
+    "type": "sfx",
+    "stream": "",
+    "description": "Disc pickup"
   }
 }

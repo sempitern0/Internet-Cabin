@@ -16,6 +16,14 @@ grow_vertical = 2
 theme = ExtResource("5")
 script = ExtResource("1")
 
+[node name="Backdrop" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 2
+color = Color(0.015, 0.012, 0.01, 1)
+
 [node name="Stage" type="AspectRatioContainer" parent="." unique_id=489334542]
 layout_mode = 1
 anchors_preset = 15
@@ -24,7 +32,7 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 ratio = 1.333333
-stretch_mode = 0
+stretch_mode = 2
 
 [node name="Artwork" type="Control" parent="Stage" unique_id=415026665]
 layout_mode = 2
@@ -55,55 +63,6 @@ anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 mouse_filter = 2
-
-[node name="Status" type="PanelContainer" parent="HUD/Overlay" unique_id=114786400]
-layout_mode = 0
-anchor_left = 0.02
-anchor_top = 0.02
-anchor_right = 0.48
-anchor_bottom = 0.12
-mouse_filter = 2
-
-[node name="Title" type="Label" parent="HUD/Overlay/Status" unique_id=513303978]
-layout_mode = 2
-text = "INTERNET CABIN"
-
-[node name="Settings" type="PanelContainer" parent="HUD/Overlay" unique_id=408661581]
-layout_mode = 0
-anchor_left = 0.69
-anchor_top = 0.02
-anchor_right = 0.98
-anchor_bottom = 0.22
-mouse_filter = 1
-
-[node name="Controls" type="VBoxContainer" parent="HUD/Overlay/Settings" unique_id=907881542]
-layout_mode = 2
-
-[node name="Filters" type="CheckButton" parent="HUD/Overlay/Settings/Controls" unique_id=1833030454]
-layout_mode = 2
-button_pressed = true
-text = "VHS"
-
-[node name="Strength" type="HSlider" parent="HUD/Overlay/Settings/Controls" unique_id=1277731994]
-custom_minimum_size = Vector2(120, 32)
-layout_mode = 2
-max_value = 1.0
-step = 0.05
-value = 0.45
-
-[node name="Motion" type="CheckButton" parent="HUD/Overlay/Settings/Controls" unique_id=844296679]
-layout_mode = 2
-button_pressed = true
-text = "Respiración"
-
-[node name="Hint" type="Label" parent="HUD/Overlay" unique_id=730288855]
-layout_mode = 0
-anchor_left = 0.1
-anchor_top = 0.88
-anchor_right = 0.9
-anchor_bottom = 0.97
-text = "Mueve el cursor para descubrir zonas interactivas."
-horizontal_alignment = 1
 
 [node name="Breathing" type="Node" parent="." unique_id=2123997108]
 script = ExtResource("4")

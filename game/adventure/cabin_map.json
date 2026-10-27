@@ -741,7 +741,29 @@
       "id": "bed_close",
       "title": "Cama · detalle",
       "image": "bed_close.png",
-      "hotspots": [],
+      "hotspots": [
+        {
+          "id": "compare_photos",
+          "label": "Examinar las marcas de la cama",
+          "rect": [
+            0.23,
+            0.3,
+            0.55,
+            0.28
+          ],
+          "priority": 10,
+          "hint": "Las marcas de la colcha te resultan familiares. Una imagen de esta cama permitiría compararlas.",
+          "action": {
+            "required_item": "employee_photos",
+            "consume_item": false,
+            "one_shot": true,
+            "set_flags": [
+              "photos_compared"
+            ],
+            "message_key": "Las marcas coinciden con las fotografías. Las tomaron desde dentro, mientras el empleado dormía."
+          }
+        }
+      ],
       "back_target": "bed",
       "edge_left": "bed",
       "edge_right": "bed"
@@ -768,7 +790,29 @@
       "id": "desktop_tower",
       "title": "Torre de ordenador",
       "image": "desktop_tower.png",
-      "hotspots": [],
+      "hotspots": [
+        {
+          "id": "disc_drive",
+          "label": "Examinar la unidad de CD-ROM",
+          "rect": [
+            0.38,
+            0.1,
+            0.27,
+            0.26
+          ],
+          "priority": 10,
+          "hint": "La bandeja está vacía. En el frontal pone CD-ROM; espera un disco de respaldo.",
+          "action": {
+            "required_item": "cd_rom",
+            "consume_item": true,
+            "one_shot": true,
+            "set_flags": [
+              "backup_loaded"
+            ],
+            "message_key": "La unidad gira. BACKUP 98 está cargado; un registro menciona el turno de las 03:14."
+          }
+        }
+      ],
       "back_target": "desk",
       "edge_left": "desk",
       "edge_right": "desk"
@@ -801,7 +845,29 @@
       "id": "cabin_shelf",
       "title": "Estantería",
       "image": "cabin_shelf.png",
-      "hotspots": [],
+      "hotspots": [
+        {
+          "id": "locked_compartment",
+          "label": "Examinar el baúl cerrado",
+          "rect": [
+            0.33,
+            0.04,
+            0.22,
+            0.12
+          ],
+          "priority": 10,
+          "hint": "Una cerradura pequeña, gastada y de latón. La llave debe ser de la misma época.",
+          "action": {
+            "required_item": "brass_key",
+            "consume_item": false,
+            "one_shot": true,
+            "set_flags": [
+              "compartment_open"
+            ],
+            "message_key": "La llave gira. En el interior hay una nota: «No confíes en la hora del ordenador»."
+          }
+        }
+      ],
       "back_target": "back_wall",
       "edge_left": "back_wall",
       "edge_right": "back_wall"

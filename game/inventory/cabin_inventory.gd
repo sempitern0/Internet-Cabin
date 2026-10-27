@@ -1,6 +1,7 @@
 extends Node
 class_name CabinInventory
 ## Scene-owned two-item inventory on top of the Nucleus inventory module.
+signal world_changed
 signal inspected(item_id: StringName)
 signal pickup_failed(reason: String)
 signal picked_up(item_id: StringName)
@@ -55,6 +56,7 @@ func pickup(id: StringName) -> bool:
 	if storage.add_item_by_id(id) != 1:
 		return false
 	world[id]["available"] = false
+	world_changed.emit()
 	picked_up.emit(id)
 	return true
 
@@ -63,13 +65,18 @@ func inspect(id: StringName) -> void:
 		inspected.emit(id)
 
 func discard(id: StringName, page_id: StringName) -> bool:
-	if storage == null or storage.remove_item(id) != 1:
+	if storage == null or page_id == &"" or not definitions.has(id):
 		return false
+	if storage.remove_item(id) != 1:
+		return false
+	# Stable per-item drop lanes keep two discarded items separately clickable.
+	var lane := definitions.keys().find(id)
 	world[id] = {
 		"page": String(page_id),
-		"rect": [0.43, 0.77, 0.14, 0.11],
+		"rect": [0.12 + lane * 0.15, 0.78, 0.12, 0.11],
 		"available": true,
 	}
+	world_changed.emit()
 	return true
 
 func items_on_page(page_id: StringName) -> Array[StringName]:
@@ -82,10 +89,46 @@ func items_on_page(page_id: StringName) -> Array[StringName]:
 func capture_state() -> Dictionary:
 	return {"inventory": storage.capture_state(), "world": world.duplicate(true)}
 
-func restore_state(state: Dictionary) -> void:
-	storage.restore_state(state.get("inventory", {}))
-	var saved: Variant = state.get("world", {})
-	if saved is Dictionary:
-		for id in world:
-			if saved.has(id):
-				world[id] = saved[id].duplicate(true)
+func restore_state(state: Dictionary) -> bool:
+	# Nucleus allows over-capacity restoration for migrations; this game does not.
+	# Validate the complete snapshot before touching either writable owner.
+	var bag: Variant = state.get("inventory")
+	var saved: Variant = state.get("world")
+	if not bag is Dictionary or not saved is Dictionary:
+		return false
+	var entries: Variant = bag.get("stacks")
+	if not entries is Array or entries.size() > 2:
+		return false
+	var held := {}
+	for entry in entries:
+		if not entry is Dictionary or entry.get("amount") != 1:
+			return false
+		var id := StringName(str(entry.get("item_id", "")))
+		if not definitions.has(id) or held.has(id):
+			return false
+		held[id] = true
+	var restored := {}
+	for id in definitions:
+		var location: Variant = saved.get(id)
+		if not location is Dictionary or not location.get("available") is bool:
+			return false
+		if not location.get("page") is String or str(location["page"]).is_empty():
+			return false
+		if held.has(id) and location["available"]:
+			return false
+		var values: Variant = location.get("rect")
+		if not values is Array or values.size() != 4:
+			return false
+		for value in values:
+			if not (value is float or value is int) or not is_finite(float(value)):
+				return false
+		var rect := Rect2(values[0], values[1], values[2], values[3])
+		if not rect.has_area() or rect.position.x < 0 or rect.position.y < 0:
+			return false
+		if rect.end.x > 1 or rect.end.y > 0.935:
+			return false
+		restored[id] = location.duplicate(true)
+	world = restored
+	storage.restore_state(bag)
+	world_changed.emit()
+	return true

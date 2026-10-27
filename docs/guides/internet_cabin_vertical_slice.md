@@ -1,116 +1,202 @@
-# Internet Cabin — vertical slice navegable
+# Internet Cabin: navegación, interacción y autoría
 
-Escena de arranque: `res://game/adventure/cabin_demo.tscn`. También se ejecuta con F6 desde el editor; `project.godot` usa esta escena como punto de entrada.
+Escena: `res://game/adventure/cabin_demo.tscn`. Motor de referencia: **Godot 4.7.2-stable**.
+Este documento describe el comportamiento actual y sustituye las notas de iteraciones anteriores.
 
-## Arquitectura y propiedad
+## Propiedad y composición
 
-| Responsabilidad | Dueño |
-| --- | --- |
-| Dibujo e input 2D, Theme, ShaderMaterial, BackBufferCopy | Godot |
-| Rectángulos normalizados, hit testing, foco | `NucleusImageScreen` |
-| Páginas, cambio de pantalla, flags de puerta | `NucleusAdventureSession` |
-| Canal de efectos con backend Backbuffer | `NucleusScreenShaderStack` |
-| Gráfico de vistas, textos y reglas del juego | `game/adventure/cabin_map.json` |
-| Presentación, controles HUD y sincronización de targets | `game/adventure/cabin_demo.gd` |
-| Zoom de respiración optativo | `game/adventure/breathing_camera.gd` |
-| VHS original, discreto | `game/shaders/vhs_subtle.gdshader` |
-| Accesibilidad/colores/fuente | `game/ui/internet_cabin_theme.tres` |
+| Necesidad | Primitiva Godot | Contrato Nucleus reutilizado | Política del juego |
+| --- | --- | --- | --- |
+| Entrada, hit testing, foco | `Control._gui_input`, transformaciones canvas | `NucleusImageScreen`, `NucleusScreenHotspot` | Prioridad de objetos, banda de retorno y texto contextual |
+| Navegación y progreso | Nodes, Resources y signals | `NucleusAdventureSession`, `NucleusScreenAction` | Mapa JSON, aliases y reglas de la cabina |
+| Objetos | Resources, Texture2D, Buttons | `NucleusInventory`, catálogo y definiciones | Dos bolsillos, colocación en el mundo, selección y examen |
+| Filtros | ShaderMaterial y BackBufferCopy | `NucleusScreenShaderStack`, `NucleusScreenEffectPass` | Selección de shader e intensidad |
+| Audio | AudioStream y buses | `NucleusAudio` | Correspondencia evento → pista |
 
-No se añaden Autoloads. No se reemplazan componentes de Nucleus. Las imágenes se cargan desde `assets/cabin` (1448 × 1086, 4:3). El contenido escala proporcionalmente dentro del aspecto fijo, también en 16:9 y ultrawide. Los hotspots permanecen sobre la imagen transformada; el HUD queda fuera de la capa VHS.
+`game/adventure/cabin_session.gd` es un adaptador pequeño: sobrescribe `_on_hotspot`
+para emitir `interaction_requested` antes de ejecutar la acción. Es necesario porque
+la sesión genérica activa inmediatamente los destinos y comprueba posesión, pero el
+juego necesita resolver aliases y exigir que el jugador seleccione el objeto.
+No se desconectan callbacks privados ni se modifican las clases compartidas. El
+controlador llama después a `session.activate_hotspot`: Nucleus valida posesión,
+consume objetos, aplica banderas y controla acciones de un solo uso.
 
-## Navegación
+Nucleus es el único dueño de páginas/banderas y cantidades de inventario. El juego
+posee únicamente selección, historial y ubicación de objetos no transportados.
+Los hotspots temporales se agregan a una copia del array de la pantalla; no se
+mutan los Resources del mapa ni se sustituyen permanentemente aliases.
 
-`cabin_map.json` contiene diez pantallas y el enrutamiento mediante IDs estables. Pantallas:
-`overview_closed` / `overview_open` → `desk`, `window`, `back_wall`, `bed` y `door_closed` / `door_open`; desde el umbral `porch_closed` / `porch_open`.
+## Controles y lectura del escenario
 
-El flag `door_open` guarda el estado global. `@overview` y `@interior_door` son aliases resueltos localmente por el juego, no rutas de archivo. En el futuro se pueden agregar más vistas sin introducir nuevas escenas físicas de Godot ni romper la semántica del mapa.
+- Clic izquierdo: examinar, avanzar o recoger. El cursor de hardware de 24 px y
+  el texto contextual usan el mismo hit test que la activación.
+- Flecha inferior siempre visible, banda inferior del 6,5 % o Retroceso:
+  volver al `back_target` explícito. No depende del historial.
+- Clic derecho sobre el escenario: cancelar objeto seleccionado; sin selección,
+  volver. Escape: cerrar examen, cancelar selección o abrir/cerrar pausa, por orden.
+- Tab: mostrar/ocultar flechas laterales. Los bordes laterales ocupan el 7 % y
+  tienen prioridad inferior a los objetos. Las direcciones y aceptar permiten
+  recorrer/activar hotspots mediante el foco de Nucleus.
+- Dos bolsillos arriba a la izquierda. Pulsar un objeto abre imagen y descripción,
+  con **Usar en el escenario**, **Dejar aquí** y **Cerrar**.
+- Al seleccionar Usar, pulsar el objetivo. Fallar no consume el objeto. Las pistas
+  describen el mecanismo/material/contexto que falta, sin marcar el objetivo correcto.
+- Los mensajes permanecen 4,5 segundos; el hover no los borra al siguiente frame.
+- La inspección y pausa tienen una barrera modal que bloquea clics sobre el mundo.
 
-Para explorar: mueve el ratón sobre los objetos; el cursor cambia a mano en los hotspots y aparece un texto contextual discreto. Haz clic para actuar o avanzar. El foco de hotspots de Nucleus sigue disponible mediante teclado y mando (direcciones + aceptar). Escape vuelve a la vista general. No hay barra de navegación ni botones de QA superpuestos a la escena.
+Los recogibles se dibujan usando sus iconos actuales en la misma transformación que
+la imagen y los hotspots; desaparecen al recogerlos. Al soltarlos usan posiciones
+separadas, recuperables, en la parte baja del escenario. Los SVG son placeholders:
+no equivalen a arte final integrado fotográficamente en el fondo VHS.
 
-Las pantallas de ordenador, bosque y cama contienen textos placeholder, no los menús finales. No hay aún sistema de PC empresarial, puzzle narrativo ni audio final.
+## Añadir una imagen/página
 
-## Estilo y accesibilidad
+1. Añadir el PNG a `assets/cabin/`. Cumplir el [contrato visual](../art/visual_continuity.md):
+   1448 × 1086, 4:3, perspectiva, iluminación y geometría coherentes. No estirar.
+2. Añadir una entrada a `game/adventure/cabin_map.json` con ID único, imagen,
+   título, `back_target`, `edge_left`, `edge_right` y `hotspots`.
+3. Añadir un hotspot en una página existente que apunte al nuevo ID.
+4. Comprobar ida y vuelta con ratón real, con respiración activada/desactivada y
+   diferentes relaciones de aspecto. La banda inferior está reservada para volver.
 
-El tema se ha duplicado **por valor**, no derivado dinámicamente: conserva los StyleBox, estados hover/pressed/disabled, foco visible y tamaños de control de Nucleus, con paleta de madera oscuro/ámbar, y la fuente `HomeVideo-Regular.ttf` CC0 ya presente en el proyecto. No entregar archivos de la fuente fuera del repositorio.
+```json
+{
+  "id": "new_detail",
+  "title": "Nuevo detalle",
+  "image": "new_detail.png",
+  "back_target": "desk",
+  "edge_left": "desk",
+  "edge_right": "desk",
+  "hotspots": [{
+    "id": "inspect_mark",
+    "label": "Examinar la marca",
+    "rect": [0.25, 0.2, 0.3, 0.25],
+    "priority": 5,
+    "action": {"message_key": "Una marca reciente en la madera."}
+  }]
+}
+```
 
-El VHS es un shader propio inspirado en el lenguaje analógico de [VHS / Scanline Color Fuzz](https://godotshaders.com/shader/vhs-scanline-color-fuzz/) y no copia su fuente; se minimizan ruido de sombra, movimiento horizontal y scanlines. Se aplica mediante el backend `BACKBUFFER` de Nucleus solo a la imagen de la cabina. El HUD vive en un `CanvasLayer` por encima del render y no se ve afectado por los filtros. Su control tiene activación y un deslizador de intensidad (0–1). El zoom respiratorio utiliza una sinusoide continua con interpolación exponencial dependiente de delta, a ~0,115 Hz, sin saltos de actualización ni restablecimientos de fase al cambiar de vista. Se transforma la pantalla junto a sus hotspots. Se puede desactivar desde «Respiración» y el VHS desde «VHS». No afecta a la lógica del mapa.
+`rect` significa `[x, y, ancho, alto]` normalizados respecto a **toda la imagen**.
+Un `polygon` opcional contiene vértices también normalizados, no relativos al rect.
+Nucleus exige que el punto esté dentro del rect **y** del polígono. En solapes gana
+la prioridad mayor. Reservar prefijos `pickup:` y `nav:` al runtime; las prioridades
+100 y 200 corresponden a recogibles y retorno. Usar prioridades de autoría menores.
 
-No se usa movimiento angular falso o desplazamiento de paralaje que rompa la geografía de escenas pintadas. El control de respiración se debería integrar después con los ajustes de accesibilidad globales del juego.
+`target` admite IDs o `@overview` / `@interior_door`, resueltos en cada activación
+según `door_open`. `@previous` es una opción de navegación explícita con historial;
+no usarlo en `back_target` (que debe ser determinista). `action.next_screen` debe
+ser un ID real, porque lo valida Nucleus. No sustituir un alias por el resultado
+resuelto en el Resource original.
 
-## Pruebas
+## Añadir objetos y usos
 
-1. Abrir Godot 4.7.2, importar recursos y pulsar F5.
-2. Entrar a escritorio, ventana, pared trasera y cama; volver en cada caso.
-3. Aproximarse a puerta cerrada, abrirla, cruzar al porche, cerrar desde fuera y volver a abrir; comprobar consistencia del flag global.
-4. Alternar VHS y respiración, variar el deslizador VHS de 0 a 1 y verificar su efecto; confirmar que hotspots siguen alineados, también con ventana redimensionada a 16:9, 4:3, vertical y ultrawide.
-5. Ejecutar `python3 scripts/ci/check_cabin_images.py` y escena smoke `res://tests/smoke/internet_cabin_smoke.tscn`.
-6. Comparar las imágenes de puerta desde dentro y desde fuera. Exigir continuidad visual; el script comprueba relaciones de pantalla pero no puede certificar el arte.
+En `game/inventory/cabin_items.json`, cada objeto define `id`, `name`, `description`,
+`icon`, `examine` y `start: {page, rect}`. Las dos imágenes cumplen funciones distintas:
+icono de bolsillo/mundo y vista de examen. No apilar; mantener `max_slots = 2`.
+La distribución actual de descarte está ajustada al catálogo de cinco objetos;
+si se amplía, adaptar sus posiciones para mantenerlas dentro del lienzo y sin solapes.
 
-Las imágenes de los estados tienen detalles generados en distintos pases y deben aprobarse visualmente antes de producir el juego. La composición no pretende certificar inmersión, accesibilidad o rendimiento por sí sola.
+Un hotspot que necesita un objeto lleva `hint` y una acción:
 
-## Verificación visual adicional
+```json
+{
+  "id": "disc_drive",
+  "label": "Examinar la unidad de CD-ROM",
+  "rect": [0.38, 0.1, 0.27, 0.26],
+  "priority": 10,
+  "hint": "La bandeja está vacía. En el frontal pone CD-ROM; espera un disco de respaldo.",
+  "action": {
+    "required_item": "cd_rom",
+    "consume_item": true,
+    "one_shot": true,
+    "set_flags": ["backup_loaded"],
+    "message_key": "La unidad gira. El respaldo está cargado."
+  }
+}
+```
 
-- Comprobar que HUD/controles permanecen visibles en el inicio y no están recortados por el aspecto 4:3.
-- Comparar VHS a 0 y 1: deben verse variaciones en grano de sombras, pequeñas líneas y crominancia sin tapar hotspots.
-- Desactivar la respiración mientras la cámara está ampliada: debe volver a escala 1 de forma gradual.
-- Mover el ratón sobre escritorio, puerta, ventana y fondo vacío: mano en hotspots y flecha fuera.
-- Mantener el texto contextual legible sobre diferentes exposiciones; no se debe convertir en barra de botones.
+El lector también admite `required_flags`, `set_flags`, `clear_flags` y `next_screen`.
+No todos los campos de `NucleusScreenAction` están expuestos por este lector: ampliar
+el mapeo y sus pruebas antes de usar campos adicionales. Usar `consume_item: false`
+para herramientas reutilizables; se valida igualmente la posesión real. `one_shot`
+evita repetir efectos. El CD se consume al insertarlo; fotos y llave se conservan.
+Las interacciones de ejemplo establecen `backup_loaded`, `photos_compared` y
+`compartment_open`; sus textos son contenido de prototipo, no un sistema de PC completo.
 
-## Calibración VHS YUV y respiración (iteración actual)
+`CabinInventory.capture_state/restore_state` conserva bolsa y ubicación. La sesión
+Nucleus conserva página, flags y acciones completadas. Estos contratos no implican
+que exista una partida guardada integrada: todavía falta componer ambos con una
+sesión de guardado y restaurarlos en orden inventario → aventura.
 
-El shader `game/shaders/vhs_subtle.gdshader` utiliza el algoritmo suministrado de desplazamiento de luminancia/crominancia, funciones `noise`, `rgb_to_yuv` y `yuv_to_rgb`, y `textureLod` para el desenfoque de color. Solo se añade `effect_strength` para mezclar imagen original y resultado sin romper la fórmula. La UI de intensidad controla **effect_strength**, no un uniforme inexistente llamado `intensity`.
+## Añadir filtros
 
-Valores de partida: `effect_strength=0.55`, `color_offset_multiplier=0.004`, `black_offset_multiplier=0.1`, `color_offset=0.005`, `blur_amount=0.5`. Se conservan en `vhs_settings` entre cambios de pantalla. `colorLookup` permanece declarado como en la fuente, pero aún no realiza una LUT.
+1. Guardar un `.gdshader` de tipo `canvas_item` dentro de `game/shaders/`.
+2. Añadir nombre y ruta en `SHADERS` de `cabin_demo.gd`.
+3. Mapear la intensidad 0–1 al uniform apropiado en `_apply_uniforms()`.
+4. Si requiere texturas auxiliares, asignarlas en `_apply_shader()` (ver ruido
+   de «VHS postproceso»). Nucleus recibe un `NucleusScreenEffectPass` con ID `vhs`.
+5. Probar en pausa todos los valores, cambiar de página y desactivar con «Sin filtro».
 
-Respiración actual: desplazamiento vertical sinusoidal ±0,9 % de la altura del lienzo, frecuencia 0,135 Hz, interpolación exponencial de respuesta 5, y sobremargen estable del 3 % para ocultar bordes. No hay zoom pulsante: imagen y hotspots se mueven como un mismo Control, manteniendo la alineación.
+El backend actual es `BACKBUFFER`; el shader afecta al arte/objetos del mundo,
+no al HUD del CanvasLayer. La sesión configura su página antes de emitir
+`page_changed`; el juego reaplica el filtro elegido después. No añadir otra captura
+ni otro controlador escribiendo la misma intensidad. Respiración es optativa en
+pausa y transforma conjuntamente arte y hotspots. Mantener los efectos discretos.
 
-## Revisión de máscaras interactivas
+## Añadir pistas de audio
 
-Se han ajustado las áreas de escritorio, monitor CRT, ventanas, estufa/entrada, cama y suelo mediante zonas más ajustadas y polígonos normalizados. La cámara ya no debe vibrar en zoom, sino desplazarse muy ligeramente arriba/abajo. Las máscaras de fuente están en `game/adventure/cabin_map.json`, en el campo `polygon` por pantalla; `NucleusScreenHotspot` realiza la intersección. Los rectángulos de retroceso se mantienen solo como bandas discretas junto al borde inferior. Se ha retirado el hotspot de cama no visible del plano general. Antes de dar por definitiva una máscara hay que verificarla en el motor sobre las imágenes reales, sin basarse únicamente en las coordenadas.
+Importar `.ogg` o `.wav` bajo `res://assets/audio/` y editar
+`game/adventure/cabin_audio_events.json`:
 
-## Navegación y menú de pausa (iteración actual)
+```json
+{
+  "interaction:disc_drive": {
+    "type": "sfx",
+    "stream": "res://assets/audio/cd_spin.ogg"
+  },
+  "page:porch_open": {
+    "type": "music",
+    "stream": "res://assets/audio/porch_theme.ogg",
+    "fade": 1.5
+  }
+}
+```
 
-**Juego:** los hotspots de Nucleus continúan activos. En las zonas sin objeto, hacer clic en el extremo izquierdo (0–9 %), derecho (91–100 %) o borde inferior (89–100 %) permite navegar incluso sin mostrar iconos. La precedencia corresponde al hotspot real de un objeto, seguido por las bandas de navegación. Las rutas están declaradas en `game/adventure/cabin_map.json` como `edge_left`, `edge_right`, `back_target` y `navigation`. El historial de las pantallas visitadas permite recuperar una vista anterior con `@previous`. Se eliminaron las frágiles franjas `back` sobre fotografías como las del ordenador y la ventana.
+Eventos: `page:<page_id>` al entrar, `interaction:<hotspot_id>` tras éxito,
+`blocked:<hotspot_id>` cuando falta seleccionar el objeto, `pickup:<item_id>` al
+recoger, `inspect:<message_key>` al emitir un mensaje de una acción. Preferir
+`interaction:` para audio de acciones con texto largo. Los IDs de interacción
+son globales al archivo: usar nombres distintos si dos páginas necesitan sonidos distintos.
 
-**TAB:** alterna las flechas de navegación aportadas por el proyecto. No activa ni desactiva la exploración: los márgenes siguen funcionando aunque las flechas estén ocultas. El HUD principal no muestra opciones durante la partida.
+`type: music` usa `NucleusAudio.music.play` con fundido. `sfx` y `ambient` usan
+`NucleusAudio.play_one_shot` en sus buses respectivos. **Ambient no crea un bucle**:
+para ambiente continuo componer un reproductor con ciclo de vida de escena.
+Una ruta vacía/inexistente no reproduce nada. No se han añadido pistas sonoras
+finales; el JSON contiene puntos de conexión. Evitar colocar efectos de puerta en
+`interaction:door_open`: el ID del hotspot actual es `open` o `close`.
 
-**ESC:** abre/cierra un menú independiente en `CanvasLayer`. Solo ahí se modifica el filtro VHS, su intensidad y la respiración. Pausar bloquea la interacción con hotspots y la simulación normal, pero deja la interfaz en funcionamiento.
+## Verificación reproducible
 
-**Shaders de prueba:** `Sin filtro`, `YUV sutil`, `VHS`, `VHS suave`, `VHS postproceso`, `Scanlines` y `Fathom`. Todos proceden del repositorio actual, en `shaders/` y `game/shaders/`. La selección es de previsualización en la pausa; cada shader conserva sus uniforms originales y una asignación mínima del control de intensidad. Algunos efectos son agresivos por diseño y no están calibrados para producción. El shader postprocesado recibe la textura de ruido `rgba-noise-medium.png` incluida en el repositorio.
+```bash
+python3 scripts/ci/static_checks.py
+python3 scripts/ci/documentation_audit.py
+python3 scripts/ci/productization_audit.py
+python3 scripts/ci/use_case_audit.py
+python3 scripts/ci/check_cabin_images.py
+godot --headless --path . --import
+godot --headless --path . res://tests/headless/test_runner.tscn
+godot --headless --path . res://tests/smoke/internet_cabin_smoke.tscn
+```
 
-**Audio declarativo:** `game/adventure/cabin_audio_events.json` admite claves `page:<id>`, `interaction:<hotspot>` e `inspect:<message_key>`. Cada entrada contiene `stream` (ruta `res://`), `type` (`sfx`, `ambient` o `music`) y `fade` opcional. El adaptador delega sonidos a `NucleusAudio.play_one_shot` y música a `NucleusAudio.music.play`, sin nuevos Autoload. Las rutas están vacías como marcadores de posición hasta que se añadan pistas reales.
+El smoke instancia la escena real e inyecta clics en el viewport, no solo llamadas
+a `change_page`: CRT, cuadro, todos los retornos, modalidades, 4 relaciones de aspecto,
+revisita de aliases, pulsación obsoleta, inventario lleno, uso correcto/incorrecto,
+consumo/reutilización y descarte/recogida. También comprueba la persistencia del filtro.
+Eso no certifica sensación de juego, alineación artística de cada nuevo hotspot,
+contraste en todos los monitores, mando físico, audio final o exportaciones.
 
-### QA de navegación
-
-- Desde `desk` y `window`, verificar el retroceso por borde inferior y flechas visibles con TAB.
-- Desde puerta abierta o cerrada, comprobar que los bordes vuelven a vistas válidas y que el historial no impide salir.
-- Abrir pausa con ESC, cambiar entre los siete modos de vídeo, volver al juego, cambiar de pantalla y confirmar que el filtro elegido persiste.
-- Confirmar que el HUD no altera las zonas de imagen ni recibe el shader.
-- Probar en 4:3, ultrawide y vertical, y verificar el margen real de clic con cámara respirando.
-
-## Controles y rutas — revisión de continuidad
-
-- Cursor propio únicamente durante la partida: `assets/cursors/Circle.png` (normal) y `assets/cursors/MidRing.png` (sobre interacción o zonas de borde). Se preparan en memoria con un máximo de 32 píxeles y `Image.INTERPOLATE_NEAREST`; el centro es el punto activo, sin escalado del CanvasLayer ni del shader. La pausa restaura el cursor del sistema.
-- Las flechas de ayuda, activadas por TAB, se anclan a las esquinas inferiores y al centro inferior, con botones de 38×40. Los márgenes laterales exteriores de 6,5 % y la banda inferior del 7 % se gestionan en `_input` antes de que los hotspots puedan capturarlos; el resto permanece interactivo de manera normal.
-- `Fathom` es el efecto inicial; todos los demás shaders permanecen seleccionables desde pausa.
-- El mapa tiene 18 vistas, incluidas las ocho imágenes nuevas (`bed_close`, `bed_windows`, `entry_picture`, `desktop_tower`, `computer_screen`, `cabin_shelf`, `cabin_clothes`, `cabin_boots`). Cada acercamiento posee `back_target`, `edge_left` y `edge_right` explícitos; los botones inferiores vuelven al nodo madre. El acceso a cama también está disponible desde la vista principal mediante un hotspot visible.
-- El historial se mantiene como mecanismo adicional, no como la única ruta de salida. Los tests smoke comprueban que todos los acercamientos cargan y pueden retornar a su nodo padre.
-
-Revisión manual pendiente: contraste y tamaño percibido de cursores en monitores con escala DPI distinta de 100 %, posiciones exactas de flechas y preferencias individuales sobre tamaño y amplitud de bordes.
-
-
-## Corrección de interacción (router único)
-
-La navegación física por ratón es propiedad de `cabin_demo.gd`: transforma coordenadas de viewport a UV reales del control animado, espera a soltar el botón y usa `screen.hotspot_at` y `session.activate_hotspot` cuando corresponde. `NucleusImageScreen` sigue resolviendo polígonos, prioridades y foco por teclado, pero no recibe eventos GUI de ratón en esta composición para evitar doble despacho. La banda inferior mínima (último 6,5 %) se reserva al retorno fijo de `back_target`; fuera de ella los hotspots tienen prioridad sobre los bordes. Los iconos mostrados con TAB conservan sus controles de UI.
-
-Las comprobaciones automatizadas prueban **clics** sobre el CRT y cuadro, el recorrido hacia la cama y el regreso desde la ventana, no únicamente la carga de escenas. Una vista nueva debe disponer de una ruta concreta de salida sin depender exclusivamente del historial. Se han resuelto los avisos `UNASSIGNED_VARIABLE` (selección Nucleus) y `SHADOWED_VARIABLE_BASE_CLASS` (variables del juego).
-
-## Inventario de bolsillo (primera versión)
-
-La cabina incorpora `CabinInventory` como adaptador local de `NucleusInventory`, con `max_slots = 2` y objetos no apilables. El catálogo `game/inventory/cabin_items.json` define IDs estables, nombre, descripción, lugar de aparición y **dos imágenes independientes** por objeto: `*_icon.svg` (slot) y `*_examine.svg` (inspección). Son placeholders estilizados editables; conviene sustituirlos por fotografías coherentes con el lenguaje visual definitivo.
-
-Las dos casillas compactas se muestran siempre arriba a la izquierda en un CanvasLayer, sin aplicarles el shader. Al pulsar un slot ocupado aparece una ampliación y descripción; el cierre devuelve el control al escenario. Recoger un tercer objeto deja el objeto en el mundo y emite un aviso. `discard(item_id, page_id)` permite liberar espacio sin destruir la instancia narrativa; la vista de descarte se registra en `world` para recogerlo de nuevo, y `capture_state` / `restore_state` persisten el estado de la bolsa y el mundo. Todavía no hay pantalla definitiva de soltar/usar/combinar ni puzzles.
-
-Objetos iniciales: CD-ROM (torre), fotos del empleado dormido (cama), llave (estantería), figura del zorro (botas) y recibo oculto (perchero). El progreso posterior podrá requerir decisiones entre estos cinco objetos y dos espacios. Los puntos de aparición son provisionales en algunas imágenes: antes del arte definitivo habrá que alinear las ilustraciones y las máscaras con los píxeles de las escenas.
-
-El cursor de hardware se reduce a 24 px manteniendo `Image.INTERPOLATE_NEAREST`; la flecha inferior de retroceso está girada 90° hacia arriba para representar un movimiento de retirada. Verificar orientación con el icono original en Godot.
+Referencias oficiales consultadas:
+- [Control y propagación GUI](https://docs.godotengine.org/en/stable/classes/class_control.html)
+- [Orden de entrega de InputEvent](https://docs.godotengine.org/en/stable/tutorials/inputs/inputevent.html)
+- [Godot 4.7.2](https://godotengine.org/article/maintenance-release-godot-4-7-2/)
