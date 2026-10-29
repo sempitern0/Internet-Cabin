@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://fii6ekp0fscu"
-path="res://.godot/imported/bed_window.png-9d8bf9d2ccd0ef5fb3797fcba7a4a4cb.ctex"
+uid="uid://iaip1ungimwd"
+path="res://.godot/imported/computer_screen.png-5c797b6851865fffa7c217ba3d215498.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/cabin/bed_window.png"
-dest_files=["res://.godot/imported/bed_window.png-9d8bf9d2ccd0ef5fb3797fcba7a4a4cb.ctex"]
+source_file="res://assets/cabin/computer_screen.png"
+dest_files=["res://.godot/imported/computer_screen.png-5c797b6851865fffa7c217ba3d215498.ctex"]
 
 [params]
 

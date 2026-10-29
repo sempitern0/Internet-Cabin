@@ -56,7 +56,7 @@ func normalized_point(local_point: Vector2) -> Vector2:
 func hotspot_at(point: Vector2) -> NucleusScreenHotspot:
 	if point.x < 0 or point.y < 0 or point.x > 1 or point.y > 1:
 		return null
-	var selected: NucleusScreenHotspot
+	var selected: NucleusScreenHotspot = null
 	for candidate in hotspots:
 		if candidate == null or not candidate.contains_normalized(point):
 			continue

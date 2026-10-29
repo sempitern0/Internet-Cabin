@@ -38,7 +38,7 @@ func _ready() -> void:
 
 
 func _exit_tree() -> void:
-	_clear_render_nodes()
+	_clear_render_nodes(true)
 
 
 func validate_configuration(
@@ -232,19 +232,28 @@ func _update_copy_rects() -> void:
 			copy.rect = Rect2(Vector2.ZERO, _screen_target.size)
 
 
-func _clear_render_nodes() -> void:
+func _clear_render_nodes(deferred_cleanup: bool = false) -> void:
 	if is_instance_valid(_screen_target):
 		if _screen_target.resized.is_connected(_update_copy_rects):
 			_screen_target.resized.disconnect(_update_copy_rects)
 	for overlay in _overlays:
 		if is_instance_valid(overlay):
-			overlay.free()
+			if deferred_cleanup:
+				overlay.queue_free()
+			else:
+				overlay.free()
 	for copy in _copies:
 		if is_instance_valid(copy):
-			copy.free()
+			if deferred_cleanup:
+				copy.queue_free()
+			else:
+				copy.free()
 	for stage in _stages:
 		if is_instance_valid(stage):
-			stage.free()
+			if deferred_cleanup:
+				stage.queue_free()
+			else:
+				stage.free()
 	_overlays.clear()
 	_copies.clear()
 	_stages.clear()

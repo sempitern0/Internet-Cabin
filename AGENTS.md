@@ -1,3 +1,9 @@
+## Internet Cabin: contrato obligatorio de continuidad visual
+
+Este repositorio es un **juego construido con Nucleus**, no el framework Nucleus. Para cualquier imagen, escena, shader, hotspot, transición, refactor, PR o generación automática, la **inmersión y la continuidad visual del jugador** tienen prioridad. Aplicar `docs/art/visual_continuity.md` como contrato de aprobación. No generar encuadres aislados que contradigan la geometría, las props, la iluminación, la hora del día o los estados ya establecidos. **1448 × 1086 (4:3)** es el lienzo canónico de los fondos de cabina; no estirar una imagen vertical a 4:3. Mantener mismo framing entre variantes de una misma pantalla. Verificar contenido y hotspots a distintas resoluciones; el CI de dimensiones no sustituye revisión visual. El material 3D/2D, cámaras y efectos se componen con primitivas Godot y contratos Nucleus; reglas del juego en `game/`, sin contaminar Core. Respetar el flujo CRISP original del resto del documento.
+
+---
+
 # Nucleus — agent operating contract
 
 > **Scope:** Nucleus is an agnostic, reusable Godot foundation. It is **not** a

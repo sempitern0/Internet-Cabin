@@ -10,15 +10,12 @@ config_version=5
 
 [application]
 
-config/name="Internet-Cabin"
+config/name="Internet Cabin"
+run/main_scene="res://game/adventure/cabin_demo.tscn"
 config/auto_accept_quit=false
 config/quit_on_go_back=false
 config/features=PackedStringArray("4.7", "Forward Plus")
 config/icon="res://icon.svg"
-
-[audio]
-
-buses/default_bus_layout="uid://cktnsh7pma6tc"
 
 [autoload]
 
@@ -47,7 +44,8 @@ folder_colors={
 "res://components/": "yellow",
 "res://components/ui/": "green",
 "res://core/": "purple",
-"res://modules/": "purple"
+"res://modules/": "purple",
+"res://shaders/": "purple"
 }
 
 [gui]

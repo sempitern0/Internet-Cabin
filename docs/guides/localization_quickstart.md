@@ -217,3 +217,20 @@ A minimal verification pass is:
 - [`runtime_services_quickstart.md`](runtime_services_quickstart.md)
 - [`../components/audio_save_scene_localization.md`](../components/audio_save_scene_localization.md)
 - [`../components/ui_and_accessibility.md`](../components/ui_and_accessibility.md)
+
+## Dock de localización
+
+Al activar `nucleus_localization` aparece **Localization**, un `EditorDock` nativo
+(Godot 4.7). Se puede mover, cerrar y recuperar desde los docks del editor.
+El panel usa el tema del editor y muestra el número de traducciones y fuentes,
+un filtro de rutas, los PO/MO registrados y los resultados de las operaciones.
+Doble clic revela el archivo en FileSystem; las rutas ausentes quedan señaladas.
+
+**Register translations…** y **Add source folder…** conservan el comportamiento
+aditivo de las herramientas existentes. Las notificaciones de éxito se muestran
+dentro del panel, sin abrir una ventana modal. Buscar, refrescar y navegar no
+escriben ajustes ni cambian la escena editada. Los únicos diálogos de selección
+se abren al pulsar los botones; el plugin no registra atajos globales ni fuerza foco.
+La generación POT sigue perteneciendo a Project Settings → Localization → Template Generation.
+
+Referencia: https://docs.godotengine.org/en/stable/classes/class_editordock.html

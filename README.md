@@ -1,3 +1,41 @@
+# Internet Cabin
+
+A point-and-click analog horror adventure set in a small forest work cabin at dusk. Explore coherent, photographic 2D views representing a fixed 3D space, interact with the company computer, and watch an ordinary evening grow unsettling.
+
+Built with Godot 4.7.2 and the composable Nucleus foundation.
+
+## Interaction and next integrations
+
+Hardware cursors distinguish inspection (magnifier), pickup (hand), navigation/use
+(ring) and empty scenery (circle). All navigation arrows start hidden; TAB toggles
+them together. Edge navigation and right-click/Backspace remain available.
+World cutouts are separate from inventory icons; current items are provisional.
+
+- [Current interaction contract and review](docs/game/interaction-review.md)
+- [Narrative, dusk/night, forest and flashlight integration plan](docs/game/INTEGRATION_PLAN.md)
+- [Authoring and controls](docs/guides/internet_cabin_vertical_slice.md)
+
+## Visual source of truth
+
+**Immersion and spatial continuity are the production priorities.** Cabin backgrounds use **1448 × 1086 (4:3)**. Godot retains this aspect ratio at all display sizes: never stretch portraits to fill the screen. Closed/open door views must share exactly the same camera/crop, while animations and optional VHS shaders remain restrained.
+
+- [Visual continuity contract and asset manifest](docs/art/visual_continuity.md)
+- [Nucleus image-screen composition](docs/components/image_screen_interaction.md)
+- [Visual asset audit](scripts/ci/check_cabin_images.py)
+- [Original Nucleus engineering documentation](docs/README.md)
+
+```sh
+python3 scripts/ci/check_cabin_images.py --allow-missing-door
+# Once both door images are imported:
+python3 scripts/ci/check_cabin_images.py
+```
+
+The canonical door images are `assets/cabin/cabin_closed_door.png` and `assets/cabin/cabin_open_door.png`. Until binary artwork is committed, use the optional-door check locally. The asset contract requires both images before the door navigation can be considered complete.
+
+---
+
+## Nucleus foundation reference
+
 <p align="center">
   <img src="icon.svg" width="112" height="112" alt="Nucleus icon">
 </p>

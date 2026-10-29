@@ -14,6 +14,21 @@ func _run() -> void:
 		await get_tree().process_frame
 	while EditorInterface.get_resource_filesystem().is_scanning():
 		await get_tree().process_frame
+	var dock := EditorInterface.get_base_control().find_child("NucleusLocalization", true, false)
+	_check(dock is EditorDock, "Native localization dock is installed.")
+	if dock != null:
+		var search := dock.find_child("TranslationFilter", true, false) as LineEdit
+		var entries := dock.find_child("RegisteredTranslations", true, false) as ItemList
+		var settings_before: Variant = ProjectSettings.get_setting(
+			NucleusLocalizationProjectTools.TRANSLATIONS)
+		search.text = "__no_translation_matches__"
+		search.text_changed.emit(search.text)
+		_check(entries.item_count == 0, "Dock filters paths without modifying settings.")
+		search.text = ""
+		search.text_changed.emit(search.text)
+		_check(entries.item_count == settings_before.size(), "Clearing filter restores paths.")
+		_check(ProjectSettings.get_setting(NucleusLocalizationProjectTools.TRANSLATIONS)
+			== settings_before, "Browsing the dock preserves project settings.")
 	var key := NucleusLocalizationProjectTools.TRANSLATIONS
 	var before: PackedStringArray = ProjectSettings.get_setting(key)
 	_check(NucleusLocalizationProjectTools.register_translations(
