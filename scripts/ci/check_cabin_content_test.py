@@ -30,6 +30,17 @@ class ContentValidationTests(unittest.TestCase):
             with self.subTest(mutation=mutation):
                 self.assertTrue(validate(data, self.items))
 
+    def test_interaction_metadata(self):
+        self.items['items'][0]['collectible'] = 'false'
+        self.assertTrue(validate(self.map, self.items))
+        self.items['items'][0]['collectible'] = True
+        self.items['items'][0]['world_texture'] = 'res://missing.svg'
+        self.assertTrue(validate(self.map, self.items))
+        self.items['items'][0].pop('world_texture')
+        self.assertEqual(validate(self.map, self.items), [])
+        self.map['pages'][0]['hotspots'][0]['cursor'] = 'pickup'
+        self.assertTrue(validate(self.map, self.items))
+
     def test_bad_item(self):
         self.items['items'][0]['start']['page'] = 'missing'
         self.assertTrue(validate(self.map, self.items))

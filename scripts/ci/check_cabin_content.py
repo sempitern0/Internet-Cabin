@@ -89,6 +89,8 @@ def validate(data, catalog, root=ROOT):
             require(not hotspot_id.startswith(("nav:", "pickup:")), location, "reserved ID prefix")
             require(isinstance(spec.get("label"), str) and bool(spec["label"]),
                     location, "missing label")
+            require(spec.get("cursor", "inspect") in ("inspect", "interact"),
+                    location, "cursor must be inspect or interact")
             rect(spec.get("rect"), location)
             visible = flags(spec, "visible_when", location)
             hidden = flags(spec, "hidden_when", location)
@@ -125,6 +127,9 @@ def validate(data, catalog, root=ROOT):
         for key in ("icon", "examine"):
             resource(item.get(key), item_id + "/" + key)
         require(type(item.get("available", True)) is bool, item_id, "available must be boolean")
+        require(type(item.get("collectible", True)) is bool, item_id, "collectible must be boolean")
+        if item.get("world_texture"):
+            resource(item["world_texture"], item_id + "/world_texture")
         start = item.get("start", {})
         if not require(isinstance(start, dict), item_id, "start must be an object"):
             continue

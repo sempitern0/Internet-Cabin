@@ -4,6 +4,17 @@ A point-and-click analog horror adventure set in a small forest work cabin at du
 
 Built with Godot 4.7.2 and the composable Nucleus foundation.
 
+## Interaction and next integrations
+
+Hardware cursors distinguish inspection (magnifier), pickup (hand), navigation/use
+(ring) and empty scenery (circle). All navigation arrows start hidden; TAB toggles
+them together. Edge navigation and right-click/Backspace remain available.
+World cutouts are separate from inventory icons; current items are provisional.
+
+- [Current interaction contract and review](docs/game/interaction-review.md)
+- [Narrative, dusk/night, forest and flashlight integration plan](docs/game/INTEGRATION_PLAN.md)
+- [Authoring and controls](docs/guides/internet_cabin_vertical_slice.md)
+
 ## Visual source of truth
 
 **Immersion and spatial continuity are the production priorities.** Cabin backgrounds use **1448 × 1086 (4:3)**. Godot retains this aspect ratio at all display sizes: never stretch portraits to fill the screen. Closed/open door views must share exactly the same camera/crop, while animations and optional VHS shaders remain restrained.

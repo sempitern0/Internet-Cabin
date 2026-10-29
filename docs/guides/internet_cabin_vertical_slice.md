@@ -30,11 +30,11 @@ mutan los Resources del mapa ni se sustituyen permanentemente aliases.
 
 - Clic izquierdo: examinar, avanzar o recoger. El cursor de hardware de 24 px y
   el texto contextual usan el mismo hit test que la activación.
-- Flecha inferior siempre visible, banda inferior del 6,5 % o Retroceso:
+- Flecha inferior cuando TAB está activo, banda inferior del 6,5 % o Retroceso:
   volver al `back_target` explícito. No depende del historial.
 - Clic derecho sobre el escenario: cancelar objeto seleccionado; sin selección,
   volver. Escape: cerrar examen, cancelar selección o abrir/cerrar pausa, por orden.
-- Tab: mostrar/ocultar flechas laterales. Los bordes laterales ocupan el 7 % y
+- Tab: mostrar/ocultar todas las flechas, incluida la central de regreso. Los bordes laterales ocupan el 7 % y
   tienen prioridad inferior a los objetos. Las direcciones y aceptar permiten
   recorrer/activar hotspots mediante el foco de Nucleus.
 - Dos bolsillos arriba a la izquierda. Pulsar un objeto abre imagen y descripción,
@@ -44,7 +44,7 @@ mutan los Resources del mapa ni se sustituyen permanentemente aliases.
 - Los mensajes permanecen 4,5 segundos; el hover no los borra al siguiente frame.
 - La inspección y pausa tienen una barrera modal que bloquea clics sobre el mundo.
 
-Los recogibles se dibujan usando sus iconos actuales en la misma transformación que
+Los objetos se dibujan usando `world_texture`, nunca el icono de bolsillo, en la misma transformación que
 la imagen y los hotspots; desaparecen al recogerlos. Al soltarlos usan posiciones
 separadas, recuperables, en la parte baja del escenario. Los SVG son placeholders:
 no equivalen a arte final integrado fotográficamente en el fondo VHS.
@@ -92,8 +92,20 @@ resuelto en el Resource original.
 ## Añadir objetos y usos
 
 En `game/inventory/cabin_items.json`, cada objeto define `id`, `name`, `description`,
-`icon`, `examine` y `start: {page, rect}`. Las dos imágenes cumplen funciones distintas:
-icono de bolsillo/mundo y vista de examen. No apilar; mantener `max_slots = 2`.
+`icon`, `examine` y `start: {page, rect}`. `world_texture` es opcional: un recorte con
+transparencia para el mundo; si falta, no se dibuja un sustituto cuadrado. `icon` solo
+se usa en el bolsillo y `examine` en el panel. No apilar; mantener `max_slots = 2`.
+
+`collectible` es booleano, por defecto true. Con false (ejemplo: figura del zorro),
+el clic abre examen y no hay usar/dejar/recoger. Inventario lleno también permite
+examinar un recogible sin recogerlo. La mano solo aparece si realmente cabe;
+la lupa indica examen. El aro se reserva para navegación/uso; el círculo para vacío.
+Los hotspots del mapa aceptan `cursor: "inspect"` (por defecto) o `"interact"`.
+En pausa, HUD y examen se restaura el cursor del sistema.
+
+Un snapshot antiguo que lleve un objeto ahora marcado como no recogible se rechaza
+sin alterar la partida actual. Antes de cambiar el catálogo de producción, migrar
+estas partidas o mantener estable la propiedad de los IDs publicados.
 La distribución actual de descarte está ajustada al catálogo de cinco objetos;
 si se amplía, adaptar sus posiciones para mantenerlas dentro del lienzo y sin solapes.
 

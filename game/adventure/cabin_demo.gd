@@ -47,7 +47,12 @@ var _shader_select: OptionButton
 var _shader_strength: HSlider
 var _cursor_normal: Texture2D
 var _cursor_hover: Texture2D
-var _cursor_active := false
+var _cursor_active: StringName = &"system"
+var _cursor_inspect: Texture2D
+var _cursor_pickup: Texture2D
+var _use_button: Button
+var _drop_button: Button
+var _pickup_button: Button
 
 
 func _ready() -> void:
@@ -140,7 +145,9 @@ func _ready() -> void:
 	inventory.world_changed.connect(_refresh_world)
 	_cursor_normal = _load_cursor("res://assets/cursors/Circle.png")
 	_cursor_hover = _load_cursor("res://assets/cursors/MidRing.png")
-	_apply_game_cursor(false, true)
+	_cursor_inspect = _load_cursor("res://assets/cursors/inspect.svg")
+	_cursor_pickup = _load_cursor("res://assets/cursors/pickup.svg")
+	_apply_game_cursor(&"normal", true)
 	_make_hud()
 	breathing.target = screen
 	_on_page_changed(session.current_page)
@@ -202,7 +209,7 @@ func _process(_delta: float) -> void:
 	var over_world := hovered == screen
 	var point := screen.normalized_point(screen.get_local_mouse_position())
 	var hit := screen.hotspot_at(point) if over_world else null
-	_apply_game_cursor(hit != null)
+	_apply_game_cursor(_cursor_for_hit(hit) if over_world else &"system")
 	if Time.get_ticks_msec() < _message_until:
 		return
 	if hit == null and screen.has_focus() and screen.focused_hotspot != &"":
@@ -300,7 +307,8 @@ func _refresh_world() -> void:
 		region.id = StringName("pickup:" + str(id))
 		region.bounds = Rect2(values[0], values[1], values[2], values[3])
 		region.priority = 100
-		region.description_key = StringName("Recoger " + str(inventory.definitions[id]["name"]))
+		var verb := "Recoger " if inventory.can_pickup(id) else "Examinar "
+		region.description_key = StringName(verb + str(inventory.definitions[id]["name"]))
 		authored.append(region)
 	for side in ["left", "right", "back"]:
 		if not _can_navigate_side(side):
@@ -364,16 +372,22 @@ func _make_inventory_ui() -> void:
 	close_button.text = "Cerrar"
 	content.add_child(close_button)
 	close_button.pressed.connect(_close_inspection)
-	var use_button := Button.new()
-	use_button.text = "Usar en el escenario"
-	content.add_child(use_button)
-	use_button.pressed.connect(func():
+	_use_button = Button.new()
+	_use_button.text = "Usar en el escenario"
+	content.add_child(_use_button)
+	_use_button.pressed.connect(func():
 		_select_item(_inspected_item)
 		_close_inspection())
-	var drop_button := Button.new()
-	drop_button.text = "Dejar aquí"
-	content.add_child(drop_button)
-	drop_button.pressed.connect(_drop_inspected_item)
+	_drop_button = Button.new()
+	_drop_button.text = "Dejar aquí"
+	content.add_child(_drop_button)
+	_drop_button.pressed.connect(_drop_inspected_item)
+	_pickup_button = Button.new()
+	_pickup_button.text = "Recoger"
+	content.add_child(_pickup_button)
+	_pickup_button.pressed.connect(func():
+		if inventory.pickup(_inspected_item):
+			_close_inspection())
 	_inspect_panel.hide()
 	inventory.storage.changed.connect(_refresh_inventory)
 	_refresh_inventory()
@@ -409,17 +423,24 @@ func _slot_pressed(index: int) -> void:
 
 
 func _inspect_item(id: StringName) -> void:
-	if _paused or not inventory.storage.has_item(id):
+	if _paused or not inventory.can_inspect(id):
 		return
 	_inspected_item = id
 	var data: Dictionary = inventory.definitions[id]
 	_inspect_image.texture = load(str(data.get("examine", ""))) as Texture2D
 	_inspect_text.text = str(data.get("name", "")) + "\n" + str(data.get("description", ""))
+	var held := inventory.storage.has_item(id)
+	_use_button.visible = held
+	_drop_button.visible = held
+	_pickup_button.visible = not held and inventory.is_collectible(id)
+	_pickup_button.disabled = not inventory.can_pickup(id)
+	if not held and inventory.is_collectible(id) and not inventory.can_pickup(id):
+		_inspect_text.text += "\nBolsillos llenos. Deja un objeto para recoger este."
 	_modal.show()
 	_inspect_panel.show()
 	screen.interaction_enabled = false
 	_update_arrows()
-	_apply_game_cursor(false, true)
+	_apply_game_cursor(&"system", true)
 	_inspect_panel.get_child(0).get_child(2).grab_focus()
 
 
@@ -452,7 +473,7 @@ func _load_cursor(path: String) -> Texture2D:
 	var bitmap := original.get_image()
 	if bitmap == null or bitmap.is_empty():
 		return original
-	# Maximum 32 physical pixels. Nearest resize avoids texture filtering blur.
+	# Maximum 24 physical pixels. Nearest resize avoids texture filtering blur.
 	var length := maxi(bitmap.get_width(), bitmap.get_height())
 	if length > 24:
 		var ratio := 24.0 / float(length)
@@ -462,16 +483,41 @@ func _load_cursor(path: String) -> Texture2D:
 	return ImageTexture.create_from_image(bitmap)
 
 
-func _apply_game_cursor(hovering: bool, force: bool = false) -> void:
-	if _paused or (not force and hovering == _cursor_active):
+func _cursor_for_hit(hit: NucleusScreenHotspot) -> StringName:
+	if hit == null:
+		return &"normal"
+	if _selected_item != &"":
+		return &"interact"
+	var id := str(hit.id)
+	if id.begins_with("pickup:"):
+		var item_id := StringName(id.trim_prefix("pickup:"))
+		return &"pickup" if inventory.can_pickup(item_id) else &"inspect"
+	if id.begins_with("nav:"):
+		return &"interact"
+	for spec in page_data[session.current_page].get("hotspots", []):
+		if StringName(spec["id"]) == hit.id:
+			return StringName(spec.get("cursor", "inspect"))
+	return &"interact"
+
+
+func _apply_game_cursor(kind: StringName, force: bool = false) -> void:
+	if not force and kind == _cursor_active:
 		return
-	_cursor_active = hovering
-	var image := _cursor_hover if hovering else _cursor_normal
-	if image == null:
-		return
-	# OS cursor textures are not subject to CanvasLayer, camera or VHS scaling.
-	# Keep imported PNG pixels unfiltered; the hotspot is their geometric centre.
-	var hotspot := image.get_size() * 0.5
+	_cursor_active = kind
+	var image: Texture2D
+	var hotspot := Vector2.ZERO
+	match kind:
+		&"normal": image = _cursor_normal
+		&"interact": image = _cursor_hover
+		&"inspect": image = _cursor_inspect
+		&"pickup": image = _cursor_pickup
+	if image != null:
+		hotspot = image.get_size() * 0.5
+		if kind == &"inspect":
+			hotspot = Vector2(9, 9)
+		elif kind == &"pickup":
+			hotspot = Vector2(9, 3)
+	# OS cursor stays independent of camera, VHS and canvas scaling.
 	Input.set_custom_mouse_cursor(image, Input.CURSOR_ARROW, hotspot)
 	Input.set_custom_mouse_cursor(image, Input.CURSOR_POINTING_HAND, hotspot)
 
@@ -499,7 +545,11 @@ func _on_interaction(id: StringName, _destination: StringName) -> void:
 		if _selected_item != &"":
 			_show_inventory_message("Guarda el objeto seleccionado antes de recoger otro.")
 		else:
-			inventory.pickup(StringName(str(id).trim_prefix("pickup:")))
+			var item_id := StringName(str(id).trim_prefix("pickup:"))
+			if inventory.can_pickup(item_id):
+				inventory.pickup(item_id)
+			else:
+				inventory.inspect(item_id)
 		return
 	var spec: Dictionary = {}
 	for candidate in page_data[session.current_page].get("hotspots", []):
@@ -678,10 +728,10 @@ func _navigate_side(side: String) -> void:
 func _update_arrows() -> void:
 	if _arrows == null or session == null:
 		return
-	_arrows.visible = not _paused and not _inspect_panel.visible
-	_hint.visible = _arrows.visible
+	_arrows.visible = _show_guides and not _paused and not _inspect_panel.visible
+	_hint.visible = not _paused and not _inspect_panel.visible
 	for button in _arrows.get_children():
-		button.visible = (button.name == "back" or _show_guides) and _can_navigate_side(
+		button.visible = _show_guides and _can_navigate_side(
 			str(button.name))
 
 
@@ -696,10 +746,10 @@ func set_paused(value: bool) -> void:
 		_shader_select.grab_focus()
 		Input.set_custom_mouse_cursor(null, Input.CURSOR_ARROW)
 		Input.set_custom_mouse_cursor(null, Input.CURSOR_POINTING_HAND)
-		_cursor_active = false
+		_cursor_active = &"system"
 	else:
 		screen.grab_focus()
-		_apply_game_cursor(false, true)
+		_apply_game_cursor(&"normal", true)
 
 
 func _on_shader_selected(index: int) -> void:

@@ -4,6 +4,7 @@ extends Node2D
 var screen: NucleusImageScreen
 var inventory: CabinInventory
 var page_id: StringName
+var _textures: Dictionary = {}
 
 
 func _draw() -> void:
@@ -13,7 +14,13 @@ func _draw() -> void:
 	for id in inventory.items_on_page(page_id):
 		var values: Array = inventory.world[id]["rect"]
 		var bounds := Rect2(values[0], values[1], values[2], values[3])
-		var icon := inventory.storage.get_definition(id).icon
+		# World art is optional; never fall back to a square inventory card.
+		var path := str(inventory.definitions[id].get("world_texture", ""))
+		if path.is_empty():
+			continue
+		if not _textures.has(path):
+			_textures[path] = load(path) as Texture2D
+		var icon := _textures[path] as Texture2D
 		if icon == null:
 			continue
 		var target := Rect2(area.position + bounds.position * area.size, bounds.size * area.size)

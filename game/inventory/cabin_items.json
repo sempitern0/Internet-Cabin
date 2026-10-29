@@ -15,7 +15,9 @@
           0.13,
           0.16
         ]
-      }
+      },
+      "collectible": true,
+      "world_texture": "res://assets/items/cd_rom_world.svg"
     },
     {
       "id": "employee_photos",
@@ -31,7 +33,9 @@
           0.18,
           0.14
         ]
-      }
+      },
+      "collectible": true,
+      "world_texture": "res://assets/items/employee_photos_world.svg"
     },
     {
       "id": "brass_key",
@@ -47,7 +51,9 @@
           0.15,
           0.15
         ]
-      }
+      },
+      "collectible": true,
+      "world_texture": "res://assets/items/brass_key_world.svg"
     },
     {
       "id": "fox_figurine",
@@ -63,7 +69,9 @@
           0.17,
           0.14
         ]
-      }
+      },
+      "collectible": false,
+      "world_texture": "res://assets/items/fox_figurine_world.svg"
     },
     {
       "id": "strange_receipt",
@@ -79,7 +87,9 @@
           0.16,
           0.15
         ]
-      }
+      },
+      "collectible": true,
+      "world_texture": "res://assets/items/strange_receipt_world.svg"
     }
   ]
 }

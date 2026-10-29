@@ -578,7 +578,8 @@
             "set_flags": [
               "door_open"
             ]
-          }
+          },
+          "cursor": "interact"
         },
         {
           "id": "picture",
@@ -612,7 +613,8 @@
             0.65
           ],
           "target": "porch_open",
-          "priority": 2
+          "priority": 2,
+          "cursor": "interact"
         },
         {
           "id": "close",
@@ -628,7 +630,8 @@
             "clear_flags": [
               "door_open"
             ]
-          }
+          },
+          "cursor": "interact"
         },
         {
           "id": "picture",
@@ -666,7 +669,8 @@
             "set_flags": [
               "door_open"
             ]
-          }
+          },
+          "cursor": "interact"
         },
         {
           "id": "forest",
@@ -701,7 +705,8 @@
             0.69
           ],
           "target": "door_open",
-          "priority": 2
+          "priority": 2,
+          "cursor": "interact"
         },
         {
           "id": "close",
@@ -717,7 +722,8 @@
             "clear_flags": [
               "door_open"
             ]
-          }
+          },
+          "cursor": "interact"
         },
         {
           "id": "forest",
@@ -761,7 +767,8 @@
               "photos_compared"
             ],
             "message_key": "Las marcas coinciden con las fotografías. Las tomaron desde dentro, mientras el empleado dormía."
-          }
+          },
+          "cursor": "interact"
         }
       ],
       "back_target": "bed",
@@ -810,7 +817,8 @@
               "backup_loaded"
             ],
             "message_key": "La unidad gira. BACKUP 98 está cargado; un registro menciona el turno de las 03:14."
-          }
+          },
+          "cursor": "interact"
         }
       ],
       "back_target": "desk",
@@ -888,7 +896,8 @@
               "compartment_open"
             ],
             "message_key": "La llave gira. En el interior hay una nota: «No confíes en la hora del ordenador»."
-          }
+          },
+          "cursor": "interact"
         }
       ],
       "back_target": "back_wall",

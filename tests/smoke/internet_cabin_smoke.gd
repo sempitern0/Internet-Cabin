@@ -132,8 +132,8 @@ func _run_smoke() -> void:
 		get_tree().quit(1)
 		return
 	session.change_page(&"overview_closed")
-	if not instance._arrows.visible or not instance._arrows.get_node("back").visible:
-		push_error("Retreat control must always be visible")
+	if instance._arrows.visible or instance._arrows.get_node("back").visible:
+		push_error("All navigation guides must stay hidden until TAB")
 		get_tree().quit(1)
 		return
 	instance.set_paused(true)
@@ -179,6 +179,7 @@ func _run_smoke() -> void:
 		push_error("Cabin exterior door state inconsistent")
 		get_tree().quit(1)
 		return
+	await _verify_cursor_contract(instance)
 	await _verify_interaction(instance)
 	await _verify_authoring_and_progress(instance)
 	if _failures > 0:
@@ -416,3 +417,57 @@ func _verify_authoring_and_progress(instance: Control) -> void:
 	get_viewport().push_input(escape, true)
 	_check(instance._selected_item == &"" and not instance._paused,
 		"Escape must cancel selection before pausing")
+
+
+func _verify_cursor_contract(instance: Control) -> void:
+	instance.breathing.enabled = false
+	instance.breathing.reset_motion()
+	await get_tree().process_frame
+	await get_tree().process_frame
+	var pocket: CabinInventory = instance.inventory
+	var before := pocket.capture_state()
+	instance.navigate(&"cabin_boots")
+	var hit: NucleusScreenHotspot = instance.screen.hotspot_at(Vector2(0.53, 0.72))
+	_check(hit != null and instance._cursor_for_hit(hit) == &"inspect", "Prop needs magnifier")
+	await _click(instance, Vector2(0.53, 0.72))
+	_check(instance._inspect_panel.visible, "World prop did not open examination")
+	_check(not instance._use_button.visible and not instance._drop_button.visible
+		and not instance._pickup_button.visible, "Prop exposes inventory actions")
+	_check(not pocket.pickup(&"fox_figurine"), "Inspectable prop was collected")
+	_check(pocket.capture_state() == before, "Inspection mutated inventory/world")
+	instance._close_inspection()
+	instance.navigate(&"desktop_tower")
+	var rect: Array = pocket.world[&"cd_rom"]["rect"]
+	var point := Vector2(rect[0] + rect[2] * 0.5, rect[1] + rect[3] * 0.5)
+	hit = instance.screen.hotspot_at(point)
+	_check(instance._cursor_for_hit(hit) == &"inspect", "Full bag promises pickup")
+	await _click(instance, point)
+	_check(instance._inspect_panel.visible and instance._pickup_button.disabled,
+		"Full bag must allow inspection without pickup")
+	_check(pocket.capture_state() == before, "Full-bag examination lost an object")
+	instance._close_inspection()
+	pocket.discard(&"brass_key", &"cabin_shelf")
+	_check(instance._cursor_for_hit(hit) == &"pickup", "Available item needs hand")
+	await _click(instance, point)
+	_check(pocket.storage.has_item(&"cd_rom"), "Native hand click did not collect")
+	var after_hit: NucleusScreenHotspot = instance.screen.hotspot_at(point)
+	_check(after_hit == null or after_hit.id != &"pickup:cd_rom", "Collected hotspot remains")
+	pocket.restore_state(before)
+	instance.navigate(&"desk")
+	hit = instance.screen.hotspot_at(Vector2(0.36, 0.45))
+	_check(instance._cursor_for_hit(hit) == &"inspect", "Close-up needs magnifier")
+	var tab := InputEventKey.new()
+	tab.keycode = KEY_TAB
+	tab.pressed = true
+	get_viewport().push_input(tab, true)
+	_check(instance._arrows.visible and instance._arrows.get_node("back").visible,
+		"TAB did not reveal return guide")
+	get_viewport().push_input(tab, true)
+	_check(not instance._arrows.visible, "Second TAB did not hide all guides")
+	_check(instance._cursor_inspect.get_size() == Vector2(24, 24)
+		and instance._cursor_pickup.get_size() == Vector2(24, 24), "Cursor size contract")
+	var invalid := before.duplicate(true)
+	invalid["inventory"]["stacks"][0]["item_id"] = "fox_figurine"
+	invalid["world"][&"fox_figurine"]["available"] = false
+	_check(not pocket.restore_state(invalid), "Save bypassed noncollectible policy")
+	_check(pocket.capture_state() == before, "Invalid save mutated live state")

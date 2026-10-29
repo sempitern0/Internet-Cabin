@@ -43,8 +43,22 @@ func _ready() -> void:
 	storage.catalog = catalog
 	add_child(storage)
 
+func is_collectible(id: StringName) -> bool:
+	return definitions.has(id) and bool(definitions[id].get("collectible", true))
+
+
+func can_pickup(id: StringName) -> bool:
+	return (storage != null and is_collectible(id) and bool(world[id]["available"])
+		and not storage.has_item(id) and storage.can_add_item(storage.get_definition(id)))
+
+
+func can_inspect(id: StringName) -> bool:
+	return (storage != null and definitions.has(id)
+		and (storage.has_item(id) or bool(world[id]["available"])))
+
+
 func pickup(id: StringName) -> bool:
-	if storage == null or not definitions.has(id):
+	if storage == null or not is_collectible(id):
 		return false
 	if storage.has_item(id):
 		return false
@@ -61,7 +75,7 @@ func pickup(id: StringName) -> bool:
 	return true
 
 func inspect(id: StringName) -> void:
-	if storage != null and storage.has_item(id):
+	if can_inspect(id):
 		inspected.emit(id)
 
 func discard(id: StringName, page_id: StringName) -> bool:
@@ -115,7 +129,7 @@ func validate_state(state: Dictionary) -> bool:
 		if not entry is Dictionary or entry.get("amount") != 1:
 			return false
 		var id := StringName(str(entry.get("item_id", "")))
-		if not definitions.has(id) or held.has(id):
+		if not is_collectible(id) or held.has(id):
 			return false
 		held[id] = true
 	for id in definitions:
